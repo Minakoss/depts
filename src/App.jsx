@@ -252,14 +252,7 @@ function Dashboard({ session }) {
 
           <button
             onClick={handleLogout}
-            style={{
-              marginLeft: "auto",
-              border: "none",
-              background: "transparent",
-              cursor: "pointer",
-              color: "#65727e",
-              fontSize: "20px",
-            }}
+            className="logout-button"
             title="Αποσύνδεση"
           >
             ↪
@@ -308,10 +301,6 @@ function DashboardHome({ session, onNewDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDebts();
-  }, []);
-
   const loadDebts = async () => {
     setLoading(true);
 
@@ -321,12 +310,19 @@ function DashboardHome({ session, onNewDebt }) {
       .eq("user_id", session.user.id)
       .order("due_date", { ascending: true });
 
-    if (!error) {
+    if (error) {
+      console.error(error);
+      setDebts([]);
+    } else {
       setDebts(data || []);
     }
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadDebts();
+  }, [session.user.id]);
 
   const total = debts.reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
@@ -382,7 +378,9 @@ function DashboardHome({ session, onNewDebt }) {
               Δεν υπάρχουν ακόμα καταχωρημένες οφειλές.
             </div>
           ) : (
-            debts.map((debt) => <DebtRow key={debt.id} debt={debt} />)
+            debts.map((debt) => (
+              <DebtRow key={debt.id} debt={debt} onChanged={loadDebts} />
+            ))
           )}
         </div>
       </div>
@@ -398,10 +396,6 @@ function DebtsPage({ session, onNewDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadDebts();
-  }, []);
-
   const loadDebts = async () => {
     setLoading(true);
 
@@ -411,12 +405,19 @@ function DebtsPage({ session, onNewDebt }) {
       .eq("user_id", session.user.id)
       .order("due_date", { ascending: true });
 
-    if (!error) {
+    if (error) {
+      console.error(error);
+      setDebts([]);
+    } else {
       setDebts(data || []);
     }
 
     setLoading(false);
   };
+
+  useEffect(() => {
+    loadDebts();
+  }, [session.user.id]);
 
   return (
     <>
@@ -445,7 +446,9 @@ function DebtsPage({ session, onNewDebt }) {
               Δεν υπάρχουν καταχωρημένες οφειλές.
             </div>
           ) : (
-            debts.map((debt) => <DebtRow key={debt.id} debt={debt} />)
+            debts.map((debt) => (
+              <DebtRow key={debt.id} debt={debt} onChanged={loadDebts} />
+            ))
           )}
         </div>
       </div>
@@ -457,10 +460,65 @@ function DebtsPage({ session, onNewDebt }) {
    DEBT ROW
 ========================================================= */
 
-function DebtRow({ debt }) {
+function DebtRow({ debt, onChanged }) {
+  const [updating, setUpdating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   const formattedDate = debt.due_date
     ? new Date(`${debt.due_date}T00:00:00`).toLocaleDateString("el-GR")
     : "-";
+
+  const togglePaid = async () => {
+    if (updating || deleting) return;
+
+    setUpdating(true);
+
+    const { error } = await supabase
+      .from("debts")
+      .update({
+        paid: !debt.paid,
+      })
+      .eq("id", debt.id)
+      .eq("user_id", debt.user_id);
+
+    if (error) {
+      console.error(error);
+      alert("Δεν ήταν δυνατή η ενημέρωση της οφειλής.");
+    } else {
+      await onChanged?.();
+    }
+
+    setUpdating(false);
+  };
+
+  const deleteDebt = async () => {
+    if (deleting || updating) return;
+
+    const confirmed = window.confirm(
+      `Θέλετε σίγουρα να διαγράψετε την οφειλή "${debt.provider}" ;`,
+    );
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+
+    const { error } = await supabase
+      .from("debts")
+      .delete()
+      .eq("id", debt.id)
+      .eq("user_id", debt.user_id);
+
+    if (error) {
+      console.error(error);
+      alert("Δεν ήταν δυνατή η διαγραφή της οφειλής.");
+      setDeleting(false);
+      return;
+    }
+
+    await onChanged?.();
+
+    setDeleting(false);
+  };
 
   return (
     <div className="debt-row">
@@ -479,12 +537,28 @@ function DebtRow({ debt }) {
       </div>
 
       <div className="debt-amount">
-        <strong>{Number(debt.amount).toFixed(2)} €</strong>
+        <strong>{Number(debt.amount || 0).toFixed(2)} €</strong>
       </div>
 
-      <div className={`debt-status ${debt.paid ? "paid" : "pending"}`}>
-        {debt.paid ? "✓ Πληρώθηκε" : "Εκκρεμεί"}
-      </div>
+      <button
+        type="button"
+        className={`debt-status-button ${debt.paid ? "paid" : "pending"}`}
+        onClick={togglePaid}
+        disabled={updating || deleting}
+        title={debt.paid ? "Επαναφορά σε εκκρεμή" : "Σήμανση ως πληρωμένη"}
+      >
+        {updating ? "..." : debt.paid ? "✓ Πληρώθηκε" : "Εκκρεμεί"}
+      </button>
+
+      <button
+        type="button"
+        className="delete-debt-button"
+        onClick={deleteDebt}
+        disabled={deleting || updating}
+        title="Διαγραφή οφειλής"
+      >
+        🗑
+      </button>
     </div>
   );
 }
@@ -618,26 +692,31 @@ function ProvidersPage({ session }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadProviders = async () => {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("debts")
+        .select("provider")
+        .eq("user_id", session.user.id)
+        .order("provider");
+
+      if (error) {
+        console.error(error);
+        setProviders([]);
+      } else if (data) {
+        const uniqueProviders = [
+          ...new Set(data.map((item) => item.provider).filter(Boolean)),
+        ];
+
+        setProviders(uniqueProviders);
+      }
+
+      setLoading(false);
+    };
+
     loadProviders();
-  }, []);
-
-  const loadProviders = async () => {
-    const { data, error } = await supabase
-      .from("debts")
-      .select("provider")
-      .eq("user_id", session.user.id)
-      .order("provider");
-
-    if (!error && data) {
-      const uniqueProviders = [
-        ...new Set(data.map((item) => item.provider).filter(Boolean)),
-      ];
-
-      setProviders(uniqueProviders);
-    }
-
-    setLoading(false);
-  };
+  }, [session.user.id]);
 
   return (
     <>
@@ -685,23 +764,28 @@ function HistoryPage({ session }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadHistory = async () => {
+      setLoading(true);
+
+      const { data, error } = await supabase
+        .from("debts")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("paid", true)
+        .order("due_date", { ascending: false });
+
+      if (error) {
+        console.error(error);
+        setDebts([]);
+      } else {
+        setDebts(data || []);
+      }
+
+      setLoading(false);
+    };
+
     loadHistory();
-  }, []);
-
-  const loadHistory = async () => {
-    const { data, error } = await supabase
-      .from("debts")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .eq("paid", true)
-      .order("due_date", { ascending: false });
-
-    if (!error) {
-      setDebts(data || []);
-    }
-
-    setLoading(false);
-  };
+  }, [session.user.id]);
 
   return (
     <>
@@ -724,7 +808,17 @@ function HistoryPage({ session }) {
           ) : debts.length === 0 ? (
             <div className="empty-state">Δεν υπάρχουν πληρωμένες οφειλές.</div>
           ) : (
-            debts.map((debt) => <DebtRow key={debt.id} debt={debt} />)
+            debts.map((debt) => (
+              <DebtRow
+                key={debt.id}
+                debt={debt}
+                onChanged={() => {
+                  setDebts((current) =>
+                    current.filter((item) => item.id !== debt.id),
+                  );
+                }}
+              />
+            ))
           )}
         </div>
       </div>
