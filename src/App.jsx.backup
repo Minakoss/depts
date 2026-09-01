@@ -1,0 +1,277 @@
+import { useEffect, useState } from "react";
+import { supabase } from "./lib/supabaseClient";
+import "./App.css";
+
+function App() {
+  const [session, setSession] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    const getSession = async () => {
+      const { data } = await supabase.auth.getSession();
+
+      setSession(data.session);
+      setCheckingSession(false);
+    };
+
+    getSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  if (checkingSession) {
+    return null;
+  }
+
+  if (!session) {
+    return <LoginPage />;
+  }
+
+  return <Dashboard session={session} />;
+}
+
+/* =========================
+   LOGIN
+========================= */
+
+function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [language, setLanguage] = useState("EL");
+
+  const handleLogin = async (event) => {
+    event.preventDefault();
+
+    setError("");
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError("Λάθος email ή κωδικός πρόσβασης.");
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="login-page">
+      {/* ΑΡΙΣΤΕΡΗ ΠΛΕΥΡΑ */}
+      <section className="login-visual">
+        <div className="visual-overlay"></div>
+
+        <div className="visual-content">
+          <div className="welcome-text">
+            <div>Καλωσήρθατε στο</div>
+
+            <h1>MY DEBTS</h1>
+
+            <p>
+              Την εφαρμογή που απλοποιεί τη διαχείριση
+              <br />
+              των μηνιαίων υποχρεώσεων
+            </p>
+          </div>
+        </div>
+
+        <div className="version">V 1.0.0</div>
+      </section>
+
+      {/* ΔΕΞΙΑ ΠΛΕΥΡΑ */}
+      <section className="login-panel">
+        {/* ΓΛΩΣΣΑ */}
+        <div className="language-switch">
+          <button
+            type="button"
+            className={language === "EL" ? "language-active" : ""}
+            onClick={() => setLanguage("EL")}
+          >
+            EL
+          </button>
+
+          <span>|</span>
+
+          <button
+            type="button"
+            className={language === "EN" ? "language-active" : ""}
+            onClick={() => setLanguage("EN")}
+          >
+            EN
+          </button>
+        </div>
+
+        <div className="login-content">
+          {/* LOGO */}
+          <div className="brand">
+            <div className="brand-icon">€</div>
+
+            <div className="brand-name">
+              <strong>MY</strong>
+              <span>DEBTS</span>
+            </div>
+          </div>
+
+          <p className="login-description">
+            Συμπληρώστε τα στοιχεία σας για να συνδεθείτε
+          </p>
+
+          {/* LOGIN FORM */}
+          <form onSubmit={handleLogin} className="login-form">
+            <div className="login-field">
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Όνομα χρήστη"
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Κωδικός πρόσβασης"
+                required
+              />
+            </div>
+
+            <div className="forgot-password">
+              <button type="button">Ξέχασα τον κωδικό μου</button>
+            </div>
+
+            {error && <div className="login-error">{error}</div>}
+
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? "Σύνδεση..." : "Είσοδος"}
+            </button>
+
+            <button type="button" className="offline-button">
+              Είσοδος Offline
+            </button>
+          </form>
+        </div>
+
+        <div className="login-footer">
+          Προσωπική διαχείριση μηνιαίων υποχρεώσεων
+        </div>
+      </section>
+    </div>
+  );
+}
+
+/* =========================
+   DASHBOARD
+========================= */
+
+function Dashboard({ session }) {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  return (
+    <div className="app">
+      {/* SIDEBAR */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <div className="logo-mark">€</div>
+
+          <div>
+            <strong>MY DEBTS</strong>
+            <span>PERSONAL FINANCE</span>
+          </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="nav-title">ΚΥΡΙΟ ΜΕΝΟΥ</div>
+
+          <button className="nav-item active">
+            <span className="nav-icon">⌂</span>
+            Αρχική
+          </button>
+
+          <button className="nav-item">
+            <span className="nav-icon">€</span>
+            Υποχρεώσεις
+          </button>
+
+          <button className="nav-item">
+            <span className="nav-icon">✓</span>
+            Πληρωμές
+          </button>
+
+          <div className="nav-title second">ΔΙΑΧΕΙΡΙΣΗ</div>
+
+          <button className="nav-item">
+            <span className="nav-icon">＋</span>
+            Νέα υποχρέωση
+          </button>
+
+          <button className="nav-item">
+            <span className="nav-icon">⚙</span>
+            Ρυθμίσεις
+          </button>
+        </nav>
+
+        <div className="sidebar-footer">
+          <div className="user-avatar">
+            {session?.user?.email?.charAt(0).toUpperCase()}
+          </div>
+
+          <div>
+            <strong>{session?.user?.email}</strong>
+
+            <span>Συνδεδεμένος</span>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            style={{
+              marginLeft: "auto",
+              border: "none",
+              background: "transparent",
+              cursor: "pointer",
+              color: "#65727e",
+            }}
+            title="Αποσύνδεση"
+          >
+            ↪
+          </button>
+        </div>
+      </aside>
+
+      {/* MAIN */}
+      <main className="main-area">
+        <div className="welcome">
+          <h2>Καλώς ήρθατε</h2>
+
+          <p>Διαχειριστείτε τις μηνιαίες σας υποχρεώσεις.</p>
+        </div>
+
+        <div className="coming-soon">
+          <div className="coming-icon">€</div>
+
+          <h2>Ο πίνακας ελέγχου σας</h2>
+
+          <p>Εδώ θα εμφανίζονται οι υποχρεώσεις και οι πληρωμές σας.</p>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default App;
