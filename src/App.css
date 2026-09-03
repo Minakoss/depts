@@ -14,6 +14,10 @@ body,
   margin: 0;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family:
     Inter,
@@ -30,9 +34,17 @@ body {
 
 button,
 input,
-select,
-textarea {
+select {
   font-family: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+input,
+select {
+  -webkit-appearance: none;
 }
 
 /* =========================================================
@@ -340,7 +352,6 @@ textarea {
 
 .login-error {
   margin-bottom: 14px;
-
   padding: 10px 12px;
 
   border-radius: 5px;
@@ -484,6 +495,8 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: center;
+
+  flex-shrink: 0;
 
   border-radius: 7px;
 
@@ -734,7 +747,7 @@ textarea {
 }
 
 /* =========================================================
-   WELCOME
+   WELCOME HEADER
 ========================================================= */
 
 .welcome {
@@ -784,7 +797,7 @@ textarea {
 
   gap: 18px;
 
-  margin: 30px 34px 20px;
+  margin: 36px 34px 20px;
 }
 
 .summary-card {
@@ -800,16 +813,6 @@ textarea {
   border-radius: 8px;
 
   background: white;
-
-  transition:
-    box-shadow 0.2s,
-    transform 0.2s;
-}
-
-.summary-card:hover {
-  box-shadow: 0 4px 15px rgba(45, 75, 100, 0.06);
-
-  transform: translateY(-1px);
 }
 
 .summary-card span {
@@ -923,15 +926,15 @@ textarea {
 
   border-bottom: 1px solid #edf1f4;
 
-  transition: background 0.2s;
-}
-
-.debt-row:last-child {
-  border-bottom: none;
+  transition: background 0.15s;
 }
 
 .debt-row:hover {
   background: #fbfdff;
+}
+
+.debt-row:last-child {
+  border-bottom: none;
 }
 
 /* =========================================================
@@ -958,10 +961,6 @@ textarea {
 
   font-size: 13px;
   font-weight: 600;
-
-  transition:
-    background 0.2s,
-    color 0.2s;
 }
 
 /* =========================================================
@@ -977,16 +976,16 @@ textarea {
 .debt-info strong {
   display: block;
 
-  color: #465363;
-
-  font-size: 12px;
-  font-weight: 600;
-
   overflow: hidden;
 
   white-space: nowrap;
 
   text-overflow: ellipsis;
+
+  color: #465363;
+
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .debt-info span {
@@ -994,15 +993,15 @@ textarea {
 
   margin-top: 4px;
 
-  color: #98a5b2;
-
-  font-size: 9px;
-
   overflow: hidden;
 
   white-space: nowrap;
 
   text-overflow: ellipsis;
+
+  color: #98a5b2;
+
+  font-size: 9px;
 }
 
 /* =========================================================
@@ -1011,6 +1010,8 @@ textarea {
 
 .debt-due {
   width: 90px;
+
+  flex-shrink: 0;
 
   text-align: left;
 }
@@ -1038,24 +1039,13 @@ textarea {
 }
 
 /* =========================================================
-   EXPIRED DATE
-========================================================= */
-
-.debt-row.expired .debt-due strong {
-  color: #dc2626;
-  font-weight: 700;
-}
-
-.debt-row.expired .debt-due span {
-  color: #ef4444;
-}
-
-/* =========================================================
    AMOUNT
 ========================================================= */
 
 .debt-amount {
   width: 105px;
+
+  flex-shrink: 0;
 
   text-align: right;
 }
@@ -1080,7 +1070,7 @@ textarea {
 
   border-radius: 5px;
 
-  padding: 6px 9px;
+  padding: 7px 9px;
 
   font-family: inherit;
 
@@ -1091,12 +1081,11 @@ textarea {
 
   transition:
     opacity 0.2s,
-    transform 0.1s,
-    box-shadow 0.2s;
+    transform 0.1s;
 }
 
 .debt-status-button:hover {
-  opacity: 0.88;
+  opacity: 0.85;
 }
 
 .debt-status-button:active {
@@ -1119,10 +1108,6 @@ textarea {
   color: #08752f;
 }
 
-.debt-status-button.paid:hover {
-  background: #b9e8cb;
-}
-
 /* =========================================================
    PENDING - ORANGE
 ========================================================= */
@@ -1131,10 +1116,6 @@ textarea {
   background: #ffe0b2;
 
   color: #c45f00;
-}
-
-.debt-status-button.pending:hover {
-  background: #ffd49a;
 }
 
 /* =========================================================
@@ -1150,7 +1131,9 @@ textarea {
 }
 
 .debt-status-button.expired:hover {
-  background: #ffc1c1;
+  background: #ffc5c5;
+
+  opacity: 1;
 }
 
 /* =========================================================
@@ -1158,8 +1141,8 @@ textarea {
 ========================================================= */
 
 .edit-debt-button {
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
 
   flex-shrink: 0;
 
@@ -1176,9 +1159,9 @@ textarea {
 
   background: transparent !important;
 
-  color: #7b8794 !important;
+  color: #718096 !important;
 
-  font-size: 15px;
+  font-size: 16px;
 
   line-height: 1;
 
@@ -1188,28 +1171,19 @@ textarea {
 
   transition:
     color 0.2s,
-    background 0.2s,
-    transform 0.15s;
+    transform 0.1s;
 }
 
 .edit-debt-button:hover {
-  background: #edf5fb !important;
+  background: transparent !important;
 
   color: #287bc1 !important;
 
-  border-radius: 6px;
-
-  transform: scale(1.05);
+  transform: scale(1.1);
 }
 
 .edit-debt-button:active {
   transform: scale(0.95);
-}
-
-.edit-debt-button:disabled {
-  opacity: 0.45;
-
-  cursor: wait;
 }
 
 /* =========================================================
@@ -1226,7 +1200,7 @@ textarea {
   align-items: center;
   justify-content: center;
 
-  margin-left: 4px;
+  margin-left: 3px;
 
   padding: 0;
 
@@ -1247,18 +1221,15 @@ textarea {
 
   transition:
     color 0.2s,
-    transform 0.1s,
-    background 0.2s;
+    transform 0.1s;
 }
 
 .delete-debt-button:hover {
-  background: #fff1f2 !important;
+  background: transparent !important;
 
   color: #be123c !important;
 
-  border-radius: 6px;
-
-  transform: scale(1.08);
+  transform: scale(1.1);
 }
 
 .delete-debt-button:active {
@@ -1271,147 +1242,6 @@ textarea {
   color: #e11d48 !important;
 
   opacity: 0.45;
-
-  cursor: wait;
-}
-
-/* =========================================================
-   EDIT MODE
-========================================================= */
-
-.debt-row.editing {
-  padding-top: 18px;
-  padding-bottom: 18px;
-
-  background: #f8fbfe;
-}
-
-.debt-edit-form {
-  width: 100%;
-
-  display: grid;
-
-  grid-template-columns:
-    minmax(150px, 1.3fr)
-    minmax(120px, 1fr)
-    minmax(100px, 0.7fr)
-    minmax(140px, 0.8fr)
-    auto;
-
-  gap: 10px;
-
-  align-items: end;
-}
-
-.debt-edit-field {
-  min-width: 0;
-}
-
-.debt-edit-field label {
-  display: block;
-
-  margin-bottom: 5px;
-
-  color: #8794a2;
-
-  font-size: 8px;
-  font-weight: 700;
-
-  letter-spacing: 0.6px;
-}
-
-.debt-edit-field input,
-.debt-edit-field select {
-  width: 100%;
-
-  height: 36px;
-
-  padding: 0 9px;
-
-  border: 1px solid #d2dbe4;
-
-  border-radius: 6px;
-
-  background: white;
-
-  color: #354052;
-
-  font-size: 10px;
-
-  outline: none;
-
-  transition:
-    border-color 0.2s,
-    box-shadow 0.2s;
-}
-
-.debt-edit-field input:focus,
-.debt-edit-field select:focus {
-  border-color: #3d8bc9;
-
-  box-shadow: 0 0 0 3px rgba(61, 139, 201, 0.1);
-}
-
-.debt-edit-actions {
-  display: flex;
-
-  align-items: center;
-
-  gap: 5px;
-
-  height: 36px;
-}
-
-.debt-edit-save,
-.debt-edit-cancel {
-  width: 34px;
-  height: 34px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border: none;
-
-  border-radius: 6px;
-
-  cursor: pointer;
-
-  font-size: 13px;
-
-  transition:
-    background 0.2s,
-    transform 0.1s;
-}
-
-.debt-edit-save {
-  background: #d7f3e1;
-
-  color: #08752f;
-}
-
-.debt-edit-save:hover {
-  background: #c2ebd1;
-}
-
-.debt-edit-cancel {
-  background: #f0f2f4;
-
-  color: #65727e;
-}
-
-.debt-edit-cancel:hover {
-  background: #e5e8eb;
-}
-
-.debt-edit-save:active,
-.debt-edit-cancel:active {
-  transform: translateY(1px);
-}
-
-.debt-edit-save:disabled,
-.debt-edit-cancel:disabled {
-  opacity: 0.5;
 
   cursor: wait;
 }
@@ -1461,6 +1291,10 @@ textarea {
   border-bottom: none;
 }
 
+.provider-item .debt-icon {
+  margin-right: 12px;
+}
+
 /* =========================================================
    FORM
 ========================================================= */
@@ -1492,11 +1326,9 @@ textarea {
 }
 
 .form-field input,
-.form-field select,
-.form-field textarea {
+.form-field select {
   width: 100%;
-
-  min-height: 42px;
+  height: 42px;
 
   padding: 0 12px;
 
@@ -1516,29 +1348,12 @@ textarea {
     box-shadow 0.2s;
 }
 
-.form-field textarea {
-  padding-top: 10px;
-  padding-bottom: 10px;
-
-  resize: vertical;
-}
-
 .form-field input:focus,
-.form-field select:focus,
-.form-field textarea:focus {
+.form-field select:focus {
   border-color: #3d8bc9;
 
   box-shadow: 0 0 0 3px rgba(61, 139, 201, 0.1);
 }
-
-.form-field input::placeholder,
-.form-field textarea::placeholder {
-  color: #aeb5bd;
-}
-
-/* =========================================================
-   SELECTS
-========================================================= */
 
 .form-field select {
   cursor: pointer;
@@ -1557,10 +1372,6 @@ textarea {
 .form-field select option {
   color: #354052;
 }
-
-/* =========================================================
-   FORM ROW
-========================================================= */
 
 .form-row {
   display: grid;
@@ -1631,29 +1442,45 @@ textarea {
 ========================================================= */
 
 @media (max-width: 1100px) {
-  .debt-edit-form {
-    grid-template-columns:
-      minmax(130px, 1fr)
-      minmax(110px, 1fr)
-      minmax(90px, 0.7fr)
-      minmax(120px, 0.8fr)
-      auto;
+  .sidebar {
+    width: 215px;
+  }
+
+  .main-area {
+    margin-left: 215px;
+
+    width: calc(100% - 215px);
+  }
+
+  .main-area::before {
+    left: 215px;
+  }
+
+  .summary-grid {
+    gap: 14px;
+
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+
+  .debts-section {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+
+  .debt-row {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .debt-status-button {
-    min-width: 82px;
-
-    margin-left: 10px;
-  }
-
-  .debt-amount {
-    width: 90px;
-  }
-
-  .debt-due {
-    width: 80px;
+    margin-left: 12px;
   }
 }
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+========================================================= */
 
 @media (max-width: 900px) {
   .login-visual {
@@ -1693,23 +1520,19 @@ textarea {
   }
 
   .summary-grid {
-    gap: 12px;
-
-    margin-left: 20px;
-    margin-right: 20px;
+    margin-top: 30px;
   }
 
-  .debts-section {
-    margin-left: 20px;
-    margin-right: 20px;
+  .debt-info {
+    max-width: 30%;
   }
 
-  .debt-edit-form {
-    grid-template-columns: 1fr 1fr;
+  .debt-due {
+    width: 80px;
   }
 
-  .debt-edit-actions {
-    justify-content: flex-end;
+  .debt-amount {
+    width: 85px;
   }
 }
 
@@ -1718,261 +1541,664 @@ textarea {
 ========================================================= */
 
 @media (max-width: 700px) {
+  /* -------------------------------------------------------
+     LOGIN MOBILE BACKGROUND
+  ------------------------------------------------------- */
+
+  .login-page {
+    position: relative;
+
+    min-height: 100svh;
+
+    display: block;
+
+    background:
+      linear-gradient(rgba(20, 73, 113, 0.2), rgba(20, 73, 113, 0.2)),
+      url("/login-bg.png");
+
+    background-size: cover;
+    background-position: center;
+
+    overflow-y: auto;
+  }
+
   .login-visual {
     display: none;
   }
 
   .login-panel {
     width: 100%;
-    min-height: 100vh;
+    min-height: 100svh;
 
-    padding: 30px 25px;
+    display: flex;
+
+    padding: 70px 22px 75px;
+
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9),
+      rgba(247, 251, 254, 0.91)
+    );
+
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+  }
+
+  .language-switch {
+    top: 22px;
+    right: 22px;
   }
 
   .login-content {
-    width: min(430px, 100%);
+    width: 100%;
+    max-width: 430px;
+  }
+
+  .brand {
+    margin-bottom: 15px;
   }
 
   .brand-name {
     font-size: 25px;
   }
 
+  .brand-icon {
+    font-size: 27px;
+  }
+
   .login-description {
+    font-size: 14px;
+
+    margin-bottom: 24px;
+  }
+
+  .login-field {
+    margin-bottom: 13px;
+  }
+
+  .login-field input {
+    height: 46px;
+
+    font-size: 14px;
+  }
+
+  .forgot-password {
+    margin-bottom: 22px;
+  }
+
+  .login-button,
+  .offline-button {
+    height: 45px;
+
     font-size: 14px;
   }
 
   .login-footer {
-    bottom: 15px;
-  }
-
-  /* SIDEBAR */
-
-  .sidebar {
-    width: 68px;
-  }
-
-  .sidebar-logo {
-    justify-content: center;
-
-    padding: 0;
-  }
-
-  .sidebar-logo > div:last-child {
-    display: none;
-  }
-
-  .sidebar-nav {
-    padding: 20px 8px;
-  }
-
-  .nav-title {
-    display: none;
-  }
-
-  .nav-item {
-    justify-content: center;
-
-    padding: 0;
-
-    font-size: 0;
-  }
-
-  .nav-icon {
-    font-size: 16px;
-  }
-
-  .sidebar-footer {
-    justify-content: center;
-
-    padding: 10px 5px;
-  }
-
-  .sidebar-footer > div:nth-child(2),
-  .sidebar-footer button {
-    display: none;
-  }
-
-  /* MAIN */
-
-  .main-area {
-    margin-left: 68px;
-
-    width: calc(100% - 68px);
-  }
-
-  .main-area::before {
-    left: 68px;
-  }
-
-  .welcome {
-    padding-left: 20px;
-  }
-
-  .welcome h2 {
-    font-size: 19px;
-  }
-
-  /* SUMMARY */
-
-  .summary-grid {
-    grid-template-columns: 1fr;
-
-    margin: 20px;
-  }
-
-  /* SECTION */
-
-  .debts-section {
-    margin: 20px;
-  }
-
-  /* HEADER */
-
-  .section-header {
-    gap: 10px;
-
-    padding: 14px;
-  }
-
-  .section-header h2 {
-    font-size: 15px;
-  }
-
-  .new-debt-button {
-    flex-shrink: 0;
-
-    padding: 0 11px;
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
 
     font-size: 10px;
   }
 
-  /* DEBT ROW */
+  /* -------------------------------------------------------
+     MOBILE APP
+  ------------------------------------------------------- */
+
+  .app {
+    min-height: 100svh;
+
+    display: block;
+
+    padding-bottom: 70px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE SIDEBAR -> BOTTOM NAVIGATION
+  ------------------------------------------------------- */
+
+  .sidebar {
+    position: fixed;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: auto;
+
+    width: 100%;
+    height: 64px;
+
+    display: flex;
+    flex-direction: row;
+
+    background: rgba(255, 255, 255, 0.97);
+
+    border-top: 1px solid #dfe7ee;
+    border-right: none;
+
+    box-shadow: 0 -3px 15px rgba(30, 60, 90, 0.08);
+
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    display: none;
+  }
+
+  .sidebar-nav {
+    width: 100%;
+
+    display: flex;
+    align-items: stretch;
+    justify-content: space-around;
+
+    padding: 4px 6px;
+  }
+
+  .nav-title,
+  .nav-title.second {
+    display: none;
+  }
+
+  .nav-item {
+    width: auto;
+    min-width: 52px;
+    height: 55px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    gap: 3px;
+
+    padding: 5px 8px;
+
+    margin: 0;
+
+    border-radius: 8px;
+
+    font-size: 9px;
+
+    text-align: center;
+  }
+
+  .nav-icon {
+    width: auto;
+
+    font-size: 18px;
+
+    line-height: 1;
+  }
+
+  .nav-item.active {
+    background: #e9f4fd;
+
+    color: #287bc1;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE MAIN AREA
+  ------------------------------------------------------- */
+
+  .main-area {
+    width: 100%;
+
+    min-height: calc(100svh - 64px);
+
+    margin-left: 0;
+
+    padding-bottom: 15px;
+
+    background: #f5f9fd;
+  }
+
+  .main-area::before {
+    display: none;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE PAGE HEADER
+  ------------------------------------------------------- */
+
+  .welcome {
+    height: auto;
+
+    min-height: 78px;
+
+    padding: 20px 20px 14px;
+
+    background: white;
+
+    border-bottom: 1px solid #e3eaf0;
+  }
+
+  .welcome h2 {
+    font-size: 21px;
+  }
+
+  .welcome p {
+    margin-top: 6px;
+
+    font-size: 10px;
+
+    line-height: 1.4;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE SUMMARY
+  ------------------------------------------------------- */
+
+  .summary-grid {
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    gap: 10px;
+
+    margin: 16px 16px 18px;
+  }
+
+  .summary-card {
+    min-height: 82px;
+
+    padding: 15px 17px;
+
+    border-radius: 9px;
+  }
+
+  .summary-card span {
+    font-size: 8px;
+  }
+
+  .summary-card strong {
+    margin-top: 6px;
+
+    font-size: 21px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE DEBTS SECTION
+  ------------------------------------------------------- */
+
+  .debts-section {
+    width: auto;
+
+    margin: 16px 16px 20px;
+
+    border-radius: 9px;
+  }
+
+  .section-header {
+    min-height: 66px;
+
+    padding: 12px 14px;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+  }
+
+  .section-header p {
+    font-size: 9px;
+  }
+
+  .new-debt-button {
+    height: 36px;
+
+    padding: 0 12px;
+
+    font-size: 10px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE DEBT ROW
+  ------------------------------------------------------- */
 
   .debt-row {
-    flex-wrap: wrap;
+    min-height: 0;
 
-    gap: 8px;
+    display: grid;
 
-    padding: 13px 14px;
+    grid-template-columns:
+      38px
+      minmax(0, 1fr)
+      auto;
+
+    grid-template-areas:
+      "icon info edit"
+      "icon details delete";
+
+    column-gap: 10px;
+    row-gap: 9px;
+
+    padding: 14px;
+
+    align-items: center;
+  }
+
+  .debt-icon {
+    grid-area: icon;
+
+    width: 38px;
+    height: 38px;
+
+    margin: 0;
   }
 
   .debt-info {
-    min-width: calc(100% - 55px);
+    grid-area: info;
+
+    min-width: 0;
+
+    max-width: none;
   }
 
+  .debt-info strong {
+    font-size: 12px;
+  }
+
+  .debt-info span {
+    margin-top: 3px;
+
+    font-size: 9px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE DETAILS
+  ------------------------------------------------------- */
+
   .debt-due {
+    grid-area: details;
+
     width: auto;
 
-    margin-left: 50px;
+    display: flex;
+    align-items: center;
+
+    gap: 5px;
+
+    margin: 0;
+
+    text-align: left;
+  }
+
+  .debt-due span {
+    display: inline;
+
+    font-size: 8px;
+  }
+
+  .debt-due strong {
+    display: inline;
+
+    margin: 0;
+
+    font-size: 10px;
   }
 
   .debt-amount {
+    grid-area: details;
+
     width: auto;
 
     margin-left: auto;
+
+    padding-right: 5px;
+
+    text-align: right;
   }
+
+  .debt-amount strong {
+    font-size: 12px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE STATUS
+     
+     Status stays on its own line so it is easy to tap.
+  ------------------------------------------------------- */
 
   .debt-status-button {
-    margin-left: 50px;
+    grid-column: 1 / -1;
 
-    min-width: 88px;
+    width: 100%;
+
+    min-width: 0;
+
+    margin: 0;
+
+    min-height: 38px;
+
+    padding: 8px 12px;
+
+    border-radius: 7px;
+
+    font-size: 10px;
   }
+
+  /* -------------------------------------------------------
+     MOBILE EDIT
+  ------------------------------------------------------- */
 
   .edit-debt-button {
-    margin-left: auto;
+    grid-area: edit;
+
+    width: 32px;
+    height: 32px;
+
+    margin: 0;
+
+    font-size: 17px;
   }
+
+  /* -------------------------------------------------------
+     MOBILE DELETE
+  ------------------------------------------------------- */
 
   .delete-debt-button {
-    margin-left: 0;
+    grid-area: delete;
+
+    width: 32px;
+    height: 32px;
+
+    margin: 0;
+
+    font-size: 16px;
   }
 
-  /* EDIT MODE */
-
-  .debt-row.editing {
-    padding: 14px;
-  }
-
-  .debt-edit-form {
-    grid-template-columns: 1fr;
-  }
-
-  .debt-edit-actions {
-    justify-content: flex-end;
-
-    margin-top: 2px;
-  }
-
-  /* FORM */
+  /* -------------------------------------------------------
+     MOBILE FORM
+  ------------------------------------------------------- */
 
   .form-container {
-    margin: 20px;
+    margin: 16px;
 
     padding: 18px;
+
+    border-radius: 9px;
+  }
+
+  .form-field {
+    margin-bottom: 16px;
+  }
+
+  .form-field label {
+    margin-bottom: 6px;
+
+    font-size: 10px;
+  }
+
+  .form-field input,
+  .form-field select {
+    height: 44px;
+
+    font-size: 13px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+
+    gap: 0;
   }
 
   .form-actions {
     flex-direction: column-reverse;
+
+    gap: 8px;
+
+    margin-top: 15px;
   }
 
   .form-actions button {
     width: 100%;
+
+    height: 43px;
+
+    font-size: 11px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE PROVIDERS
+  ------------------------------------------------------- */
+
+  .provider-list {
+    padding: 5px 14px;
+  }
+
+  .provider-item {
+    min-height: 55px;
+
+    font-size: 11px;
+  }
+
+  /* -------------------------------------------------------
+     MOBILE EMPTY STATE
+  ------------------------------------------------------- */
+
+  .empty-state {
+    min-height: 120px;
+
+    padding: 25px 18px;
+
+    font-size: 11px;
   }
 }
 
 /* =========================================================
-   SMALL MOBILE
+   VERY SMALL PHONES
 ========================================================= */
 
-@media (max-width: 450px) {
-  .sidebar {
-    width: 58px;
-  }
-
-  .main-area {
-    margin-left: 58px;
-
-    width: calc(100% - 58px);
-  }
-
-  .main-area::before {
-    left: 58px;
+@media (max-width: 380px) {
+  .login-panel {
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .welcome {
-    padding-left: 15px;
+    padding-left: 16px;
+    padding-right: 16px;
   }
 
   .summary-grid {
-    margin: 15px;
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .debts-section {
-    margin: 15px;
+    margin-left: 12px;
+    margin-right: 12px;
   }
 
   .debt-row {
     padding: 12px;
   }
 
-  .debt-status-button {
-    margin-left: 0;
+  .section-header {
+    padding-left: 12px;
+    padding-right: 12px;
   }
 
-  .debt-due {
-    margin-left: 0;
-  }
-
-  .debt-edit-form {
-    gap: 8px;
+  .new-debt-button {
+    padding-left: 9px;
+    padding-right: 9px;
   }
 
   .form-container {
-    margin: 15px;
+    margin-left: 12px;
+    margin-right: 12px;
 
     padding: 15px;
+  }
+
+  .nav-item {
+    min-width: 45px;
+
+    padding-left: 4px;
+    padding-right: 4px;
+
+    font-size: 8px;
+  }
+}
+
+/* =========================================================
+   LANDSCAPE MOBILE
+========================================================= */
+
+@media (max-width: 900px) and (orientation: landscape) {
+  .login-panel {
+    min-height: 100svh;
+
+    padding-top: 50px;
+    padding-bottom: 50px;
+  }
+
+  .login-footer {
+    display: none;
+  }
+
+  .sidebar {
+    height: 58px;
+  }
+
+  .app {
+    padding-bottom: 58px;
+  }
+
+  .nav-item {
+    height: 49px;
+  }
+
+  .welcome {
+    min-height: 70px;
+  }
+}
+
+/* =========================================================
+   TOUCH DEVICES
+========================================================= */
+
+@media (hover: none) and (pointer: coarse) {
+  .nav-item,
+  .new-debt-button,
+  .debt-status-button,
+  .edit-debt-button,
+  .delete-debt-button,
+  .form-actions button {
+    touch-action: manipulation;
+  }
+
+  .debt-status-button {
+    min-height: 40px;
+  }
+
+  .edit-debt-button,
+  .delete-debt-button {
+    min-width: 36px;
+    min-height: 36px;
   }
 }
