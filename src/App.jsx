@@ -145,17 +145,6 @@ function getDebtStatus(debt) {
   return "pending";
 }
 
-/*
-   Ταξινόμηση:
-
-   1. Ληγμένες
-   2. Εκκρεμείς με κοντινότερη ημερομηνία
-   3. Πληρωμένες
-
-   Μέσα σε κάθε κατηγορία η κοντινότερη λήξη
-   εμφανίζεται πρώτη.
-*/
-
 function sortDebts(debts) {
   return [...debts].sort((a, b) => {
     const statusOrder = {
@@ -301,7 +290,6 @@ function LoginPage() {
 
             <div className="brand-name">
               <strong>MY</strong>
-
               <span>DEBTS</span>
             </div>
           </div>
@@ -361,14 +349,8 @@ function LoginPage() {
 
 function Dashboard({ session }) {
   const [activePage, setActivePage] = useState("dashboard");
-
   const [editingDebt, setEditingDebt] = useState(null);
-
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  /* -------------------------------------------------------
-     LOGOUT
-  ------------------------------------------------------- */
 
   const handleLogout = async () => {
     const confirmed = window.confirm("Θέλετε σίγουρα να αποσυνδεθείτε;");
@@ -380,37 +362,20 @@ function Dashboard({ session }) {
     await supabase.auth.signOut();
   };
 
-  /* -------------------------------------------------------
-     EDIT
-  ------------------------------------------------------- */
-
   const handleEditDebt = (debt) => {
     setEditingDebt(debt);
-
     setActivePage("edit-debt");
-
     setMobileMenuOpen(false);
   };
-
-  /* -------------------------------------------------------
-     SAVED EDIT
-  ------------------------------------------------------- */
 
   const handleSavedEdit = () => {
     setEditingDebt(null);
-
     setActivePage("debts");
-
     setMobileMenuOpen(false);
   };
 
-  /* -------------------------------------------------------
-     NAVIGATION
-  ------------------------------------------------------- */
-
   const handleNavigation = (page) => {
     setActivePage(page);
-
     setMobileMenuOpen(false);
   };
 
@@ -426,13 +391,12 @@ function Dashboard({ session }) {
 
           <div className="mobile-brand-text">
             <strong>MY DEBTS</strong>
-
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
 
         <div className="mobile-header-actions">
-          {/* LOGOUT */}
+          {/* LOGOUT - ΝΕΟ ΒΕΛΑΚΙ */}
 
           <button
             type="button"
@@ -441,7 +405,7 @@ function Dashboard({ session }) {
             title="Αποσύνδεση"
             aria-label="Αποσύνδεση"
           >
-            ↪
+            ←
           </button>
 
           {/* MENU */}
@@ -470,7 +434,6 @@ function Dashboard({ session }) {
 
             <div>
               <strong>{session?.user?.email}</strong>
-
               <span>Συνδεδεμένος</span>
             </div>
           </div>
@@ -532,7 +495,7 @@ function Dashboard({ session }) {
             className="mobile-menu-logout"
             onClick={handleLogout}
           >
-            <span>↪</span>
+            <span>←</span>
             Αποσύνδεση
           </button>
         </div>
@@ -550,7 +513,6 @@ function Dashboard({ session }) {
 
           <div>
             <strong>MY DEBTS</strong>
-
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
@@ -614,17 +576,19 @@ function Dashboard({ session }) {
 
           <div className="sidebar-user-info">
             <strong>{session?.user?.email}</strong>
-
             <span>Συνδεδεμένος</span>
           </div>
+
+          {/* LOGOUT - ΝΕΟ ΒΕΛΑΚΙ */}
 
           <button
             className="logout-button"
             onClick={handleLogout}
             title="Αποσύνδεση"
             aria-label="Αποσύνδεση"
+            type="button"
           >
-            ↪
+            ←
           </button>
         </div>
       </aside>
@@ -688,7 +652,6 @@ function Dashboard({ session }) {
 
 function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -735,19 +698,16 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΣΥΝΟΛΟ</span>
-
           <strong>{total.toFixed(2)} €</strong>
         </div>
 
         <div className="summary-card">
           <span>ΠΛΗΡΩΜΕΝΑ</span>
-
           <strong>{paid.toFixed(2)} €</strong>
         </div>
 
         <div className="summary-card">
           <span>ΕΚΚΡΕΜΗ</span>
-
           <strong>{pending.toFixed(2)} €</strong>
         </div>
       </div>
@@ -756,7 +716,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         <div className="section-header">
           <div>
             <h2>Οφειλές</h2>
-
             <p>{debts.length} καταχωρήσεις</p>
           </div>
 
@@ -789,7 +748,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
 function DebtsPage({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -817,7 +775,6 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
     <>
       <div className="welcome">
         <h2>Οφειλές</h2>
-
         <p>Όλες οι μηνιαίες σας υποχρεώσεις.</p>
       </div>
 
@@ -825,7 +782,6 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
         <div className="section-header">
           <div>
             <h2>Οι οφειλές μου</h2>
-
             <p>{debts.length} καταχωρήσεις</p>
           </div>
 
@@ -858,7 +814,6 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
 
 function DebtRow({ debt, onEdit }) {
   const [updating, setUpdating] = useState(false);
-
   const [deleting, setDeleting] = useState(false);
 
   const formattedDate = debt.due_date
@@ -866,10 +821,6 @@ function DebtRow({ debt, onEdit }) {
     : "-";
 
   const status = getDebtStatus(debt);
-
-  /* -------------------------------------------------------
-     TOGGLE PAID
-  ------------------------------------------------------- */
 
   const togglePaid = async () => {
     setUpdating(true);
@@ -893,10 +844,6 @@ function DebtRow({ debt, onEdit }) {
 
     window.location.reload();
   };
-
-  /* -------------------------------------------------------
-     DELETE
-  ------------------------------------------------------- */
 
   const deleteDebt = async () => {
     const confirmed = window.confirm(
@@ -924,10 +871,6 @@ function DebtRow({ debt, onEdit }) {
     window.location.reload();
   };
 
-  /* -------------------------------------------------------
-     STATUS TEXT
-  ------------------------------------------------------- */
-
   let statusText = "Εκκρεμεί";
 
   if (status === "expired") {
@@ -940,35 +883,23 @@ function DebtRow({ debt, onEdit }) {
 
   return (
     <div className={`debt-row debt-row-${status}`}>
-      {/* ICON */}
-
       <div className="debt-icon">
         {debt.provider?.charAt(0)?.toUpperCase() || "€"}
       </div>
 
-      {/* INFO */}
-
       <div className="debt-info">
         <strong>{debt.provider}</strong>
-
         <span>{debt.description || "Οφειλή"}</span>
       </div>
 
-      {/* DUE DATE */}
-
       <div className="debt-due">
         <span>ΛΗΞΗ</span>
-
         <strong>{formattedDate}</strong>
       </div>
-
-      {/* AMOUNT */}
 
       <div className="debt-amount">
         <strong>{Number(debt.amount || 0).toFixed(2)} €</strong>
       </div>
-
-      {/* STATUS */}
 
       <button
         type="button"
@@ -978,8 +909,6 @@ function DebtRow({ debt, onEdit }) {
       >
         {statusText}
       </button>
-
-      {/* EDIT */}
 
       <button
         type="button"
@@ -991,8 +920,6 @@ function DebtRow({ debt, onEdit }) {
       >
         ✎
       </button>
-
-      {/* DELETE */}
 
       <button
         type="button"
@@ -1014,17 +941,11 @@ function DebtRow({ debt, onEdit }) {
 
 function NewDebtPage({ session, onBack, onSaved }) {
   const [category, setCategory] = useState("");
-
   const [provider, setProvider] = useState("");
-
   const [description, setDescription] = useState("");
-
   const [amount, setAmount] = useState("");
-
   const [dueDate, setDueDate] = useState("");
-
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState("");
 
   const availableProviders = category
@@ -1035,7 +956,6 @@ function NewDebtPage({ session, onBack, onSaved }) {
     const selectedCategory = event.target.value;
 
     setCategory(selectedCategory);
-
     setProvider("");
   };
 
@@ -1052,25 +972,12 @@ function NewDebtPage({ session, onBack, onSaved }) {
 
     setSaving(true);
 
-    /*
-         ΠΡΟΣΟΧΗ:
-
-         Δεν στέλνουμε category στη Supabase,
-         επειδή η βάση σου αυτή τη στιγμή
-         δεν έχει column category.
-      */
-
     const { error } = await supabase.from("debts").insert({
       user_id: session.user.id,
-
       provider,
-
       description: description || category,
-
       amount: Number(amount),
-
       due_date: dueDate,
-
       paid: false,
     });
 
@@ -1091,14 +998,11 @@ function NewDebtPage({ session, onBack, onSaved }) {
     <>
       <div className="welcome">
         <h2>Νέα οφειλή</h2>
-
         <p>Καταχωρήστε μια νέα μηνιαία υποχρέωση.</p>
       </div>
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
-          {/* CATEGORY */}
-
           <div className="form-field">
             <label>Κατηγορία</label>
 
@@ -1112,8 +1016,6 @@ function NewDebtPage({ session, onBack, onSaved }) {
               ))}
             </select>
           </div>
-
-          {/* PROVIDER */}
 
           <div className="form-field">
             <label>Πάροχος</label>
@@ -1136,8 +1038,6 @@ function NewDebtPage({ session, onBack, onSaved }) {
             </select>
           </div>
 
-          {/* DESCRIPTION */}
-
           <div className="form-field">
             <label>Περιγραφή</label>
 
@@ -1148,8 +1048,6 @@ function NewDebtPage({ session, onBack, onSaved }) {
               placeholder="π.χ. Λογαριασμός ηλεκτρικού"
             />
           </div>
-
-          {/* AMOUNT + DATE */}
 
           <div className="form-row">
             <div className="form-field">
@@ -1178,11 +1076,7 @@ function NewDebtPage({ session, onBack, onSaved }) {
             </div>
           </div>
 
-          {/* ERROR */}
-
           {error && <div className="login-error">{error}</div>}
-
-          {/* ACTIONS */}
 
           <div className="form-actions">
             <button type="button" onClick={onBack}>
@@ -1215,7 +1109,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
   const [dueDate, setDueDate] = useState(debt.due_date || "");
 
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState("");
 
   const availableProviders = category
@@ -1226,7 +1119,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
     const selectedCategory = event.target.value;
 
     setCategory(selectedCategory);
-
     setProvider("");
   };
 
@@ -1243,20 +1135,12 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
     setSaving(true);
 
-    /*
-         Δεν στέλνουμε category,
-         επειδή δεν υπάρχει στη βάση.
-      */
-
     const { error } = await supabase
       .from("debts")
       .update({
         provider,
-
         description: description || category,
-
         amount: Number(amount),
-
         due_date: dueDate,
       })
       .eq("id", debt.id)
@@ -1285,8 +1169,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
-          {/* CATEGORY */}
-
           <div className="form-field">
             <label>Κατηγορία</label>
 
@@ -1300,8 +1182,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
               ))}
             </select>
           </div>
-
-          {/* PROVIDER */}
 
           <div className="form-field">
             <label>Πάροχος</label>
@@ -1324,8 +1204,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
             </select>
           </div>
 
-          {/* DESCRIPTION */}
-
           <div className="form-field">
             <label>Περιγραφή</label>
 
@@ -1336,8 +1214,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
               placeholder="π.χ. Λογαριασμός ηλεκτρικού"
             />
           </div>
-
-          {/* AMOUNT + DATE */}
 
           <div className="form-row">
             <div className="form-field">
@@ -1365,11 +1241,7 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
             </div>
           </div>
 
-          {/* ERROR */}
-
           {error && <div className="login-error">{error}</div>}
-
-          {/* ACTIONS */}
 
           <div className="form-actions">
             <button type="button" onClick={onBack}>
@@ -1392,7 +1264,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
 function ProvidersPage({ session }) {
   const [providers, setProviders] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1462,7 +1333,6 @@ function ProvidersPage({ session }) {
 
 function HistoryPage({ session, onEditDebt }) {
   const [debts, setDebts] = useState([]);
-
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
