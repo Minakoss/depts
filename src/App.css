@@ -440,7 +440,7 @@ select {
 }
 
 /* =========================================================
-   DASHBOARD
+   DASHBOARD APP
 ========================================================= */
 
 .app {
@@ -463,7 +463,8 @@ select {
   top: 0;
   bottom: 0;
 
-  width: 237px;
+  /* ΑΚΡΙΒΩΣ όπως στο screenshot */
+  width: 253px;
 
   display: flex;
   flex-direction: column;
@@ -476,21 +477,21 @@ select {
 }
 
 .sidebar-logo {
-  height: 64px;
+  height: 58px;
 
   display: flex;
   align-items: center;
 
   gap: 11px;
 
-  padding: 0 22px;
+  padding: 0 14px;
 
   border-bottom: 1px solid #e1e8ef;
 }
 
 .logo-mark {
-  width: 39px;
-  height: 39px;
+  width: 43px;
+  height: 43px;
 
   display: flex;
   align-items: center;
@@ -498,13 +499,13 @@ select {
 
   flex-shrink: 0;
 
-  border-radius: 7px;
+  border-radius: 8px;
 
   background: #287bc1;
 
   color: white;
 
-  font-size: 20px;
+  font-size: 21px;
 }
 
 .sidebar-logo strong {
@@ -514,7 +515,7 @@ select {
 
   font-family: Georgia, serif;
 
-  font-size: 17px;
+  font-size: 19px;
 
   line-height: 1.1;
 }
@@ -522,7 +523,7 @@ select {
 .sidebar-logo span {
   display: block;
 
-  margin-top: 3px;
+  margin-top: 4px;
 
   color: #287bc1;
 
@@ -538,7 +539,7 @@ select {
 ========================================================= */
 
 .sidebar-nav {
-  padding: 24px 11px;
+  padding: 24px 5px;
 }
 
 .nav-title {
@@ -546,7 +547,7 @@ select {
 
   color: #9ba8b5;
 
-  font-size: 9px;
+  font-size: 10px;
 
   font-weight: 700;
 
@@ -560,7 +561,7 @@ select {
 .nav-item {
   width: 100%;
 
-  height: 44px;
+  height: 48px;
 
   display: flex;
   align-items: center;
@@ -578,7 +579,7 @@ select {
 
   color: #647284;
 
-  font-size: 12px;
+  font-size: 13px;
 
   text-align: left;
 
@@ -604,7 +605,7 @@ select {
 }
 
 .nav-icon {
-  width: 17px;
+  width: 18px;
 
   display: inline-flex;
   justify-content: center;
@@ -660,7 +661,7 @@ select {
 .sidebar-footer strong {
   display: block;
 
-  max-width: 135px;
+  max-width: 170px;
 
   overflow: hidden;
 
@@ -670,7 +671,7 @@ select {
 
   color: #4d5a68;
 
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .sidebar-footer span {
@@ -719,13 +720,15 @@ select {
 ========================================================= */
 
 .main-area {
-  margin-left: 237px;
+  margin-left: 0px;
 
-  width: calc(100% - 237px);
+  width: calc(100% - 253px);
 
   min-height: 100vh;
 
   background: #f5f9fd;
+
+  overflow-x: hidden;
 }
 
 .main-area::before {
@@ -734,10 +737,13 @@ select {
   position: fixed;
 
   top: 0;
-  left: 237px;
+
+  /* ίδιο ακριβώς με το sidebar */
+  left: 253px;
+
   right: 0;
 
-  height: 64px;
+  height: 58px;
 
   background: white;
 
@@ -755,13 +761,19 @@ select {
 
   z-index: 3;
 
-  height: 64px;
+  height: 58px;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
 
-  padding-left: 34px;
+  /*
+     Το περιεχόμενο ξεκινά στα 292px.
+     Sidebar = 253px
+     Εσωτερικό περιθώριο = 39px
+  */
+  padding-left: 39px;
+  padding-right: 30px;
 }
 
 .welcome h2 {
@@ -771,7 +783,7 @@ select {
 
   font-family: Georgia, serif;
 
-  font-size: 22px;
+  font-size: 26px;
 
   line-height: 1;
 }
@@ -783,7 +795,19 @@ select {
 
   font-family: Georgia, serif;
 
-  font-size: 10px;
+  font-size: 11px;
+}
+
+/* =========================================================
+   DESKTOP CONTENT WIDTH
+========================================================= */
+
+.summary-grid,
+.debts-section,
+.form-container,
+.provider-section {
+  width: auto;
+  max-width: none;
 }
 
 /* =========================================================
@@ -793,24 +817,29 @@ select {
 .summary-grid {
   display: grid;
 
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
-  gap: 18px;
+  gap: 20px;
 
-  margin: 36px 34px 20px;
+  /*
+     Screenshot:
+     left ≈ 292px
+     right ≈ 30px
+  */
+  margin: 33px 30px 22px 39px;
 }
 
 .summary-card {
-  min-height: 110px;
+  min-height: 122px;
 
   display: flex;
   flex-direction: column;
   justify-content: center;
 
-  padding: 20px;
+  padding: 22px;
 
   border: 1px solid #e0e7ee;
-  border-radius: 8px;
+  border-radius: 9px;
 
   background: white;
 }
@@ -818,18 +847,18 @@ select {
 .summary-card span {
   color: #98a5b2;
 
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
 
   letter-spacing: 1px;
 }
 
 .summary-card strong {
-  margin-top: 9px;
+  margin-top: 10px;
 
   color: #354052;
 
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 500;
 }
 
@@ -838,10 +867,10 @@ select {
 ========================================================= */
 
 .debts-section {
-  margin: 20px 34px 30px;
+  margin: 22px 30px 30px 39px;
 
   border: 1px solid #e0e7ee;
-  border-radius: 8px;
+  border-radius: 9px;
 
   background: white;
 
@@ -849,7 +878,7 @@ select {
 }
 
 .section-header {
-  min-height: 72px;
+  min-height: 80px;
 
   display: flex;
   align-items: center;
@@ -867,30 +896,30 @@ select {
 
   font-family: Georgia, serif;
 
-  font-size: 17px;
+  font-size: 21px;
 }
 
 .section-header p {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
 
   color: #9aa6b2;
 
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .new-debt-button {
-  height: 35px;
+  height: 42px;
 
-  padding: 0 15px;
+  padding: 0 18px;
 
   border: none;
-  border-radius: 6px;
+  border-radius: 7px;
 
   background: #287bc1;
 
   color: white;
 
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
 
   cursor: pointer;
@@ -917,7 +946,7 @@ select {
 }
 
 .debt-row {
-  min-height: 72px;
+  min-height: 80px;
 
   display: flex;
   align-items: center;
@@ -942,8 +971,8 @@ select {
 ========================================================= */
 
 .debt-icon {
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
 
   flex-shrink: 0;
 
@@ -951,15 +980,15 @@ select {
   align-items: center;
   justify-content: center;
 
-  margin-right: 12px;
+  margin-right: 14px;
 
-  border-radius: 8px;
+  border-radius: 9px;
 
   background: #eaf5fd;
 
   color: #287bc1;
 
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -984,7 +1013,7 @@ select {
 
   color: #465363;
 
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -1001,7 +1030,7 @@ select {
 
   color: #98a5b2;
 
-  font-size: 9px;
+  font-size: 10px;
 }
 
 /* =========================================================
@@ -1009,7 +1038,7 @@ select {
 ========================================================= */
 
 .debt-due {
-  width: 90px;
+  width: 110px;
 
   flex-shrink: 0;
 
@@ -1021,7 +1050,7 @@ select {
 
   color: #a1acb7;
 
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
 
   letter-spacing: 0.8px;
@@ -1034,7 +1063,8 @@ select {
 
   color: #65727e;
 
-  font-size: 10px;
+  font-size: 11px;
+
   font-weight: 500;
 }
 
@@ -1043,7 +1073,7 @@ select {
 ========================================================= */
 
 .debt-amount {
-  width: 105px;
+  width: 115px;
 
   flex-shrink: 0;
 
@@ -1053,7 +1083,8 @@ select {
 .debt-amount strong {
   color: #354052;
 
-  font-size: 12px;
+  font-size: 13px;
+
   font-weight: 600;
 }
 
@@ -1062,19 +1093,20 @@ select {
 ========================================================= */
 
 .debt-status-button {
-  min-width: 90px;
+  min-width: 110px;
 
-  margin-left: 18px;
+  margin-left: 20px;
 
   border: none;
 
-  border-radius: 5px;
+  border-radius: 6px;
 
-  padding: 7px 9px;
+  padding: 8px 10px;
 
   font-family: inherit;
 
   font-size: 10px;
+
   font-weight: 700;
 
   cursor: pointer;
@@ -1099,7 +1131,7 @@ select {
 }
 
 /* =========================================================
-   PAID - GREEN
+   PAID
 ========================================================= */
 
 .debt-status-button.paid {
@@ -1109,7 +1141,7 @@ select {
 }
 
 /* =========================================================
-   PENDING - ORANGE
+   PENDING
 ========================================================= */
 
 .debt-status-button.pending {
@@ -1119,7 +1151,7 @@ select {
 }
 
 /* =========================================================
-   EXPIRED - RED
+   EXPIRED
 ========================================================= */
 
 .debt-status-button.expired {
@@ -1141,8 +1173,8 @@ select {
 ========================================================= */
 
 .edit-debt-button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 
   flex-shrink: 0;
 
@@ -1161,7 +1193,7 @@ select {
 
   color: #718096 !important;
 
-  font-size: 16px;
+  font-size: 17px;
 
   line-height: 1;
 
@@ -1191,8 +1223,8 @@ select {
 ========================================================= */
 
 .delete-debt-button {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
 
   flex-shrink: 0;
 
@@ -1211,7 +1243,7 @@ select {
 
   color: #e11d48 !important;
 
-  font-size: 16px;
+  font-size: 17px;
 
   line-height: 1;
 
@@ -1300,7 +1332,7 @@ select {
 ========================================================= */
 
 .form-container {
-  margin: 30px 34px;
+  margin: 30px 30px 30px 39px;
 
   padding: 25px;
 
@@ -1322,17 +1354,20 @@ select {
   color: #65727e;
 
   font-size: 10px;
+
   font-weight: 600;
 }
 
 .form-field input,
 .form-field select {
   width: 100%;
+
   height: 42px;
 
   padding: 0 12px;
 
   border: 1px solid #d3dbe3;
+
   border-radius: 6px;
 
   background: white;
@@ -1401,6 +1436,7 @@ select {
   padding: 0 15px;
 
   border: none;
+
   border-radius: 6px;
 
   background: #287bc1;
@@ -1408,6 +1444,7 @@ select {
   color: white;
 
   font-size: 11px;
+
   font-weight: 600;
 
   cursor: pointer;
@@ -1456,20 +1493,35 @@ select {
     left: 215px;
   }
 
+  .welcome {
+    padding-left: 24px;
+
+    padding-right: 24px;
+  }
+
   .summary-grid {
     gap: 14px;
 
     margin-left: 24px;
+
     margin-right: 24px;
   }
 
   .debts-section {
     margin-left: 24px;
+
+    margin-right: 24px;
+  }
+
+  .form-container {
+    margin-left: 24px;
+
     margin-right: 24px;
   }
 
   .debt-row {
     padding-left: 16px;
+
     padding-right: 16px;
   }
 
@@ -1519,8 +1571,30 @@ select {
     left: 200px;
   }
 
+  .welcome {
+    padding-left: 24px;
+
+    padding-right: 24px;
+  }
+
   .summary-grid {
     margin-top: 30px;
+
+    margin-left: 20px;
+
+    margin-right: 20px;
+  }
+
+  .debts-section {
+    margin-left: 20px;
+
+    margin-right: 20px;
+  }
+
+  .form-container {
+    margin-left: 20px;
+
+    margin-right: 20px;
   }
 
   .debt-info {
@@ -1541,9 +1615,7 @@ select {
 ========================================================= */
 
 @media (max-width: 700px) {
-  /* -------------------------------------------------------
-     LOGIN MOBILE BACKGROUND
-  ------------------------------------------------------- */
+  /* LOGIN */
 
   .login-page {
     position: relative;
@@ -1557,6 +1629,7 @@ select {
       url("/login-bg.png");
 
     background-size: cover;
+
     background-position: center;
 
     overflow-y: auto;
@@ -1568,6 +1641,7 @@ select {
 
   .login-panel {
     width: 100%;
+
     min-height: 100svh;
 
     display: flex;
@@ -1581,16 +1655,19 @@ select {
     );
 
     backdrop-filter: blur(2px);
+
     -webkit-backdrop-filter: blur(2px);
   }
 
   .language-switch {
     top: 22px;
+
     right: 22px;
   }
 
   .login-content {
     width: 100%;
+
     max-width: 430px;
   }
 
@@ -1635,15 +1712,15 @@ select {
 
   .login-footer {
     left: 20px;
+
     right: 20px;
+
     bottom: 18px;
 
     font-size: 10px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE APP
-  ------------------------------------------------------- */
+  /* APP */
 
   .app {
     min-height: 100svh;
@@ -1653,27 +1730,31 @@ select {
     padding-bottom: 70px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE SIDEBAR -> BOTTOM NAVIGATION
-  ------------------------------------------------------- */
+  /* BOTTOM NAV */
 
   .sidebar {
     position: fixed;
 
     left: 0;
+
     right: 0;
+
     bottom: 0;
+
     top: auto;
 
     width: 100%;
+
     height: 64px;
 
     display: flex;
+
     flex-direction: row;
 
     background: rgba(255, 255, 255, 0.97);
 
     border-top: 1px solid #dfe7ee;
+
     border-right: none;
 
     box-shadow: 0 -3px 15px rgba(30, 60, 90, 0.08);
@@ -1689,7 +1770,9 @@ select {
     width: 100%;
 
     display: flex;
+
     align-items: stretch;
+
     justify-content: space-around;
 
     padding: 4px 6px;
@@ -1702,12 +1785,17 @@ select {
 
   .nav-item {
     width: auto;
+
     min-width: 52px;
+
     height: 55px;
 
     display: flex;
+
     flex-direction: column;
+
     justify-content: center;
+
     align-items: center;
 
     gap: 3px;
@@ -1741,9 +1829,7 @@ select {
     display: none;
   }
 
-  /* -------------------------------------------------------
-     MOBILE MAIN AREA
-  ------------------------------------------------------- */
+  /* MAIN */
 
   .main-area {
     width: 100%;
@@ -1761,9 +1847,7 @@ select {
     display: none;
   }
 
-  /* -------------------------------------------------------
-     MOBILE PAGE HEADER
-  ------------------------------------------------------- */
+  /* HEADER */
 
   .welcome {
     height: auto;
@@ -1789,9 +1873,7 @@ select {
     line-height: 1.4;
   }
 
-  /* -------------------------------------------------------
-     MOBILE SUMMARY
-  ------------------------------------------------------- */
+  /* SUMMARY */
 
   .summary-grid {
     display: grid;
@@ -1821,9 +1903,7 @@ select {
     font-size: 21px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE DEBTS SECTION
-  ------------------------------------------------------- */
+  /* DEBTS */
 
   .debts-section {
     width: auto;
@@ -1855,9 +1935,7 @@ select {
     font-size: 10px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE DEBT ROW
-  ------------------------------------------------------- */
+  /* DEBT ROW */
 
   .debt-row {
     min-height: 0;
@@ -1874,6 +1952,7 @@ select {
       "icon details delete";
 
     column-gap: 10px;
+
     row-gap: 9px;
 
     padding: 14px;
@@ -1885,6 +1964,7 @@ select {
     grid-area: icon;
 
     width: 38px;
+
     height: 38px;
 
     margin: 0;
@@ -1908,9 +1988,7 @@ select {
     font-size: 9px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE DETAILS
-  ------------------------------------------------------- */
+  /* DETAILS */
 
   .debt-due {
     grid-area: details;
@@ -1918,6 +1996,7 @@ select {
     width: auto;
 
     display: flex;
+
     align-items: center;
 
     gap: 5px;
@@ -1957,11 +2036,7 @@ select {
     font-size: 12px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE STATUS
-     
-     Status stays on its own line so it is easy to tap.
-  ------------------------------------------------------- */
+  /* STATUS */
 
   .debt-status-button {
     grid-column: 1 / -1;
@@ -1981,14 +2056,13 @@ select {
     font-size: 10px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE EDIT
-  ------------------------------------------------------- */
+  /* EDIT */
 
   .edit-debt-button {
     grid-area: edit;
 
     width: 32px;
+
     height: 32px;
 
     margin: 0;
@@ -1996,14 +2070,13 @@ select {
     font-size: 17px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE DELETE
-  ------------------------------------------------------- */
+  /* DELETE */
 
   .delete-debt-button {
     grid-area: delete;
 
     width: 32px;
+
     height: 32px;
 
     margin: 0;
@@ -2011,9 +2084,7 @@ select {
     font-size: 16px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE FORM
-  ------------------------------------------------------- */
+  /* FORM */
 
   .form-container {
     margin: 16px;
@@ -2062,9 +2133,7 @@ select {
     font-size: 11px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE PROVIDERS
-  ------------------------------------------------------- */
+  /* PROVIDERS */
 
   .provider-list {
     padding: 5px 14px;
@@ -2076,9 +2145,7 @@ select {
     font-size: 11px;
   }
 
-  /* -------------------------------------------------------
-     MOBILE EMPTY STATE
-  ------------------------------------------------------- */
+  /* EMPTY */
 
   .empty-state {
     min-height: 120px;
@@ -2096,21 +2163,25 @@ select {
 @media (max-width: 380px) {
   .login-panel {
     padding-left: 16px;
+
     padding-right: 16px;
   }
 
   .welcome {
     padding-left: 16px;
+
     padding-right: 16px;
   }
 
   .summary-grid {
     margin-left: 12px;
+
     margin-right: 12px;
   }
 
   .debts-section {
     margin-left: 12px;
+
     margin-right: 12px;
   }
 
@@ -2120,16 +2191,19 @@ select {
 
   .section-header {
     padding-left: 12px;
+
     padding-right: 12px;
   }
 
   .new-debt-button {
     padding-left: 9px;
+
     padding-right: 9px;
   }
 
   .form-container {
     margin-left: 12px;
+
     margin-right: 12px;
 
     padding: 15px;
@@ -2139,6 +2213,7 @@ select {
     min-width: 45px;
 
     padding-left: 4px;
+
     padding-right: 4px;
 
     font-size: 8px;
@@ -2154,6 +2229,7 @@ select {
     min-height: 100svh;
 
     padding-top: 50px;
+
     padding-bottom: 50px;
   }
 
@@ -2199,6 +2275,7 @@ select {
   .edit-debt-button,
   .delete-debt-button {
     min-width: 36px;
+
     min-height: 36px;
   }
 }

@@ -114,18 +114,73 @@ const PROVIDER_CATEGORIES = {
    HELPERS
 ========================================================= */
 
+function getTodayDate() {
+  const today = new Date();
+
+  today.setHours(0, 0, 0, 0);
+
+  return today;
+}
+
 function isDebtExpired(debt) {
-  if (!debt?.due_date || debt?.paid) {
+  if (!debt || debt.paid || !debt.due_date) {
     return false;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
   const dueDate = new Date(`${debt.due_date}T00:00:00`);
-  dueDate.setHours(0, 0, 0, 0);
+  const today = getTodayDate();
 
   return dueDate < today;
+}
+
+function getDebtStatus(debt) {
+  if (debt.paid) {
+    return "paid";
+  }
+
+  if (isDebtExpired(debt)) {
+    return "expired";
+  }
+
+  return "pending";
+}
+
+/*
+   Ταξινόμηση:
+
+   1. Ληγμένες
+   2. Εκκρεμείς με κοντινότερη ημερομηνία
+   3. Πληρωμένες
+
+   Μέσα σε κάθε κατηγορία η κοντινότερη λήξη
+   εμφανίζεται πρώτη.
+*/
+
+function sortDebts(debts) {
+  return [...debts].sort((a, b) => {
+    const statusOrder = {
+      expired: 0,
+      pending: 1,
+      paid: 2,
+    };
+
+    const statusA = getDebtStatus(a);
+    const statusB = getDebtStatus(b);
+
+    if (statusA !== statusB) {
+      return statusOrder[statusA] - statusOrder[statusB];
+    }
+
+    const dateA = a.due_date
+      ? new Date(`${a.due_date}T00:00:00`).getTime()
+      : Infinity;
+
+    const dateB = b.due_date
+      ? new Date(`${b.due_date}T00:00:00`).getTime()
+      : Infinity;
+
+    return dateA - dateB;
+  });
 }
 
 /* =========================================================
@@ -246,6 +301,7 @@ function LoginPage() {
 
             <div className="brand-name">
               <strong>MY</strong>
+
               <span>DEBTS</span>
             </div>
           </div>
@@ -305,33 +361,201 @@ function LoginPage() {
 
 function Dashboard({ session }) {
   const [activePage, setActivePage] = useState("dashboard");
+
   const [editingDebt, setEditingDebt] = useState(null);
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  /* -------------------------------------------------------
+     LOGOUT
+  ------------------------------------------------------- */
+
   const handleLogout = async () => {
+    const confirmed = window.confirm("Θέλετε σίγουρα να αποσυνδεθείτε;");
+
+    if (!confirmed) {
+      return;
+    }
+
     await supabase.auth.signOut();
   };
 
-  const openEditDebt = (debt) => {
+  /* -------------------------------------------------------
+     EDIT
+  ------------------------------------------------------- */
+
+  const handleEditDebt = (debt) => {
     setEditingDebt(debt);
+
     setActivePage("edit-debt");
+
+    setMobileMenuOpen(false);
   };
 
-  const closeEditDebt = () => {
+  /* -------------------------------------------------------
+     SAVED EDIT
+  ------------------------------------------------------- */
+
+  const handleSavedEdit = () => {
     setEditingDebt(null);
+
     setActivePage("debts");
+
+    setMobileMenuOpen(false);
+  };
+
+  /* -------------------------------------------------------
+     NAVIGATION
+  ------------------------------------------------------- */
+
+  const handleNavigation = (page) => {
+    setActivePage(page);
+
+    setMobileMenuOpen(false);
   };
 
   return (
     <div className="app">
+      {/* ===================================================
+          MOBILE HEADER
+      =================================================== */}
+
+      <header className="mobile-header">
+        <div className="mobile-brand">
+          <div className="mobile-logo-mark">€</div>
+
+          <div className="mobile-brand-text">
+            <strong>MY DEBTS</strong>
+
+            <span>PERSONAL FINANCE</span>
+          </div>
+        </div>
+
+        <div className="mobile-header-actions">
+          {/* LOGOUT */}
+
+          <button
+            type="button"
+            className="mobile-logout-button"
+            onClick={handleLogout}
+            title="Αποσύνδεση"
+            aria-label="Αποσύνδεση"
+          >
+            ↪
+          </button>
+
+          {/* MENU */}
+
+          <button
+            type="button"
+            className="mobile-menu-button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Μενού"
+          >
+            ☰
+          </button>
+        </div>
+      </header>
+
+      {/* ===================================================
+          MOBILE MENU
+      =================================================== */}
+
+      {mobileMenuOpen && (
+        <div className="mobile-menu">
+          <div className="mobile-user-info">
+            <div className="user-avatar">
+              {session?.user?.email?.charAt(0).toUpperCase()}
+            </div>
+
+            <div>
+              <strong>{session?.user?.email}</strong>
+
+              <span>Συνδεδεμένος</span>
+            </div>
+          </div>
+
+          <button
+            className={`mobile-nav-item ${
+              activePage === "dashboard" ? "active" : ""
+            }`}
+            onClick={() => handleNavigation("dashboard")}
+          >
+            <span>⌂</span>
+            Dashboard
+          </button>
+
+          <button
+            className={`mobile-nav-item ${
+              activePage === "debts" ? "active" : ""
+            }`}
+            onClick={() => handleNavigation("debts")}
+          >
+            <span>€</span>
+            Οφειλές
+          </button>
+
+          <button
+            className={`mobile-nav-item ${
+              activePage === "providers" ? "active" : ""
+            }`}
+            onClick={() => handleNavigation("providers")}
+          >
+            <span>▣</span>
+            Πάροχοι
+          </button>
+
+          <button
+            className={`mobile-nav-item ${
+              activePage === "history" ? "active" : ""
+            }`}
+            onClick={() => handleNavigation("history")}
+          >
+            <span>◷</span>
+            Ιστορικό
+          </button>
+
+          <button
+            className={`mobile-nav-item ${
+              activePage === "settings" ? "active" : ""
+            }`}
+            onClick={() => handleNavigation("settings")}
+          >
+            <span>⚙</span>
+            Ρυθμίσεις
+          </button>
+
+          <div className="mobile-menu-divider"></div>
+
+          <button
+            type="button"
+            className="mobile-menu-logout"
+            onClick={handleLogout}
+          >
+            <span>↪</span>
+            Αποσύνδεση
+          </button>
+        </div>
+      )}
+
+      {/* ===================================================
+          DESKTOP SIDEBAR
+      =================================================== */}
+
       <aside className="sidebar">
+        {/* LOGO */}
+
         <div className="sidebar-logo">
           <div className="logo-mark">€</div>
 
           <div>
             <strong>MY DEBTS</strong>
+
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
+
+        {/* NAVIGATION */}
 
         <nav className="sidebar-nav">
           <div className="nav-title">ΚΥΡΙΟ ΜΕΝΟΥ</div>
@@ -345,11 +569,7 @@ function Dashboard({ session }) {
           </button>
 
           <button
-            className={`nav-item ${
-              activePage === "debts" || activePage === "new-debt"
-                ? "active"
-                : ""
-            }`}
+            className={`nav-item ${activePage === "debts" ? "active" : ""}`}
             onClick={() => setActivePage("debts")}
           >
             <span className="nav-icon">€</span>
@@ -385,13 +605,16 @@ function Dashboard({ session }) {
           </button>
         </nav>
 
+        {/* USER */}
+
         <div className="sidebar-footer">
           <div className="user-avatar">
             {session?.user?.email?.charAt(0).toUpperCase()}
           </div>
 
-          <div>
+          <div className="sidebar-user-info">
             <strong>{session?.user?.email}</strong>
+
             <span>Συνδεδεμένος</span>
           </div>
 
@@ -399,18 +622,23 @@ function Dashboard({ session }) {
             className="logout-button"
             onClick={handleLogout}
             title="Αποσύνδεση"
+            aria-label="Αποσύνδεση"
           >
             ↪
           </button>
         </div>
       </aside>
 
+      {/* ===================================================
+          MAIN AREA
+      =================================================== */}
+
       <main className="main-area">
         {activePage === "dashboard" && (
           <DashboardHome
             session={session}
             onNewDebt={() => setActivePage("new-debt")}
-            onEditDebt={openEditDebt}
+            onEditDebt={handleEditDebt}
           />
         )}
 
@@ -418,14 +646,14 @@ function Dashboard({ session }) {
           <DebtsPage
             session={session}
             onNewDebt={() => setActivePage("new-debt")}
-            onEditDebt={openEditDebt}
+            onEditDebt={handleEditDebt}
           />
         )}
 
         {activePage === "providers" && <ProvidersPage session={session} />}
 
         {activePage === "history" && (
-          <HistoryPage session={session} onEditDebt={openEditDebt} />
+          <HistoryPage session={session} onEditDebt={handleEditDebt} />
         )}
 
         {activePage === "settings" && <SettingsPage session={session} />}
@@ -433,7 +661,7 @@ function Dashboard({ session }) {
         {activePage === "new-debt" && (
           <NewDebtPage
             session={session}
-            onBack={() => setActivePage("debts")}
+            onBack={() => setActivePage("dashboard")}
             onSaved={() => setActivePage("debts")}
           />
         )}
@@ -442,8 +670,11 @@ function Dashboard({ session }) {
           <EditDebtPage
             session={session}
             debt={editingDebt}
-            onBack={closeEditDebt}
-            onSaved={closeEditDebt}
+            onBack={() => {
+              setEditingDebt(null);
+              setActivePage("debts");
+            }}
+            onSaved={handleSavedEdit}
           />
         )}
       </main>
@@ -457,6 +688,7 @@ function Dashboard({ session }) {
 
 function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -469,11 +701,12 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     const { data, error } = await supabase
       .from("debts")
       .select("*")
-      .eq("user_id", session.user.id)
-      .order("due_date", { ascending: true });
+      .eq("user_id", session.user.id);
 
     if (!error) {
-      setDebts(data || []);
+      setDebts(sortDebts(data || []));
+    } else {
+      console.error(error);
     }
 
     setLoading(false);
@@ -493,6 +726,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     <>
       <div className="welcome">
         <h2>Επισκόπηση</h2>
+
         <p>
           Παρακάτω βλέπετε την οικονομική σας εικόνα για τον επιλεγμένο μήνα.
         </p>
@@ -501,16 +735,19 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΣΥΝΟΛΟ</span>
+
           <strong>{total.toFixed(2)} €</strong>
         </div>
 
         <div className="summary-card">
           <span>ΠΛΗΡΩΜΕΝΑ</span>
+
           <strong>{paid.toFixed(2)} €</strong>
         </div>
 
         <div className="summary-card">
           <span>ΕΚΚΡΕΜΗ</span>
+
           <strong>{pending.toFixed(2)} €</strong>
         </div>
       </div>
@@ -519,6 +756,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         <div className="section-header">
           <div>
             <h2>Οφειλές</h2>
+
             <p>{debts.length} καταχωρήσεις</p>
           </div>
 
@@ -551,6 +789,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
 function DebtsPage({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -563,11 +802,12 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
     const { data, error } = await supabase
       .from("debts")
       .select("*")
-      .eq("user_id", session.user.id)
-      .order("due_date", { ascending: true });
+      .eq("user_id", session.user.id);
 
     if (!error) {
-      setDebts(data || []);
+      setDebts(sortDebts(data || []));
+    } else {
+      console.error(error);
     }
 
     setLoading(false);
@@ -577,6 +817,7 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
     <>
       <div className="welcome">
         <h2>Οφειλές</h2>
+
         <p>Όλες οι μηνιαίες σας υποχρεώσεις.</p>
       </div>
 
@@ -584,6 +825,7 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
         <div className="section-header">
           <div>
             <h2>Οι οφειλές μου</h2>
+
             <p>{debts.length} καταχωρήσεις</p>
           </div>
 
@@ -616,21 +858,18 @@ function DebtsPage({ session, onNewDebt, onEditDebt }) {
 
 function DebtRow({ debt, onEdit }) {
   const [updating, setUpdating] = useState(false);
-  const [deleting, setDeleting] = useState(false);
 
-  const expired = isDebtExpired(debt);
+  const [deleting, setDeleting] = useState(false);
 
   const formattedDate = debt.due_date
     ? new Date(`${debt.due_date}T00:00:00`).toLocaleDateString("el-GR")
     : "-";
 
-  const statusClass = debt.paid ? "paid" : expired ? "expired" : "pending";
+  const status = getDebtStatus(debt);
 
-  const statusText = debt.paid
-    ? "✓ Πληρώθηκε"
-    : expired
-      ? "Έχει λήξει"
-      : "Εκκρεμεί";
+  /* -------------------------------------------------------
+     TOGGLE PAID
+  ------------------------------------------------------- */
 
   const togglePaid = async () => {
     setUpdating(true);
@@ -644,16 +883,24 @@ function DebtRow({ debt, onEdit }) {
 
     if (error) {
       console.error(error);
+
+      alert("Δεν ήταν δυνατή η αλλαγή της κατάστασης.");
+
       setUpdating(false);
+
       return;
     }
 
     window.location.reload();
   };
 
+  /* -------------------------------------------------------
+     DELETE
+  ------------------------------------------------------- */
+
   const deleteDebt = async () => {
     const confirmed = window.confirm(
-      `Θέλετε να διαγράψετε την οφειλή "${debt.provider}" ;`,
+      `Θέλετε να διαγράψετε την οφειλή "${debt.provider}";`,
     );
 
     if (!confirmed) {
@@ -666,45 +913,73 @@ function DebtRow({ debt, onEdit }) {
 
     if (error) {
       console.error(error);
+
       alert("Δεν ήταν δυνατή η διαγραφή της οφειλής.");
+
       setDeleting(false);
+
       return;
     }
 
     window.location.reload();
   };
 
+  /* -------------------------------------------------------
+     STATUS TEXT
+  ------------------------------------------------------- */
+
+  let statusText = "Εκκρεμεί";
+
+  if (status === "expired") {
+    statusText = "Έχει λήξει";
+  }
+
+  if (status === "paid") {
+    statusText = "✓ Πληρώθηκε";
+  }
+
   return (
-    <div className={`debt-row ${expired && !debt.paid ? "debt-expired" : ""}`}>
+    <div className={`debt-row debt-row-${status}`}>
+      {/* ICON */}
+
       <div className="debt-icon">
         {debt.provider?.charAt(0)?.toUpperCase() || "€"}
       </div>
 
+      {/* INFO */}
+
       <div className="debt-info">
         <strong>{debt.provider}</strong>
+
         <span>{debt.description || "Οφειλή"}</span>
       </div>
 
+      {/* DUE DATE */}
+
       <div className="debt-due">
         <span>ΛΗΞΗ</span>
-        <strong className={expired && !debt.paid ? "expired-date" : ""}>
-          {formattedDate}
-        </strong>
+
+        <strong>{formattedDate}</strong>
       </div>
 
+      {/* AMOUNT */}
+
       <div className="debt-amount">
-        <strong>{Number(debt.amount).toFixed(2)} €</strong>
+        <strong>{Number(debt.amount || 0).toFixed(2)} €</strong>
       </div>
+
+      {/* STATUS */}
 
       <button
         type="button"
-        className={`debt-status-button ${statusClass}`}
+        className={`debt-status-button ${status}`}
         onClick={togglePaid}
         disabled={updating || deleting}
-        title={debt.paid ? "Σήμανση ως εκκρεμή" : "Σήμανση ως πληρωμένη"}
       >
-        {updating ? "..." : statusText}
+        {statusText}
       </button>
+
+      {/* EDIT */}
 
       <button
         type="button"
@@ -716,6 +991,8 @@ function DebtRow({ debt, onEdit }) {
       >
         ✎
       </button>
+
+      {/* DELETE */}
 
       <button
         type="button"
@@ -736,97 +1013,29 @@ function DebtRow({ debt, onEdit }) {
 ========================================================= */
 
 function NewDebtPage({ session, onBack, onSaved }) {
-  return (
-    <DebtForm
-      session={session}
-      title="Νέα οφειλή"
-      subtitle="Καταχωρήστε μια νέα μηνιαία υποχρέωση."
-      submitLabel="Αποθήκευση οφειλής"
-      onBack={onBack}
-      onSaved={onSaved}
-    />
-  );
-}
-
-/* =========================================================
-   EDIT DEBT
-========================================================= */
-
-function EditDebtPage({ session, debt, onBack, onSaved }) {
-  return (
-    <DebtForm
-      session={session}
-      debt={debt}
-      title="Επεξεργασία οφειλής"
-      subtitle="Τροποποιήστε τα στοιχεία της οφειλής."
-      submitLabel="Αποθήκευση αλλαγών"
-      onBack={onBack}
-      onSaved={onSaved}
-    />
-  );
-}
-
-/* =========================================================
-   DEBT FORM
-========================================================= */
-
-function DebtForm({
-  session,
-  debt = null,
-  title,
-  subtitle,
-  submitLabel,
-  onBack,
-  onSaved,
-}) {
   const [category, setCategory] = useState("");
+
   const [provider, setProvider] = useState("");
+
   const [description, setDescription] = useState("");
+
   const [amount, setAmount] = useState("");
+
   const [dueDate, setDueDate] = useState("");
+
   const [saving, setSaving] = useState(false);
+
   const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!debt) {
-      setCategory("");
-      setProvider("");
-      setDescription("");
-      setAmount("");
-      setDueDate("");
-      return;
-    }
-
-    const detectedCategory =
-      Object.entries(PROVIDER_CATEGORIES).find(([, providers]) =>
-        providers.includes(debt.provider),
-      )?.[0] || "";
-
-    setCategory(detectedCategory);
-    setProvider(debt.provider || "");
-    setDescription(debt.description || "");
-    setAmount(debt.amount ?? "");
-    setDueDate(debt.due_date || "");
-  }, [debt]);
 
   const availableProviders = category
     ? PROVIDER_CATEGORIES[category] || []
     : [];
 
-  /*
-   * Σε περίπτωση που υπάρχει παλιός/χειροκίνητος πάροχος
-   * που δεν υπάρχει πλέον στη λίστα, τον εμφανίζουμε
-   * προσωρινά ώστε να μη χαθεί κατά την επεξεργασία.
-   */
-  const providerOptions =
-    provider && !availableProviders.includes(provider)
-      ? [provider, ...availableProviders]
-      : availableProviders;
-
   const handleCategoryChange = (event) => {
     const selectedCategory = event.target.value;
 
     setCategory(selectedCategory);
+
     setProvider("");
   };
 
@@ -837,43 +1046,41 @@ function DebtForm({
 
     if (!category || !provider || !amount || !dueDate) {
       setError("Συμπληρώστε κατηγορία, πάροχο, ποσό και ημερομηνία λήξης.");
+
       return;
     }
 
     setSaving(true);
 
-    const payload = {
+    /*
+         ΠΡΟΣΟΧΗ:
+
+         Δεν στέλνουμε category στη Supabase,
+         επειδή η βάση σου αυτή τη στιγμή
+         δεν έχει column category.
+      */
+
+    const { error } = await supabase.from("debts").insert({
+      user_id: session.user.id,
+
       provider,
+
       description: description || category,
+
       amount: Number(amount),
+
       due_date: dueDate,
-    };
 
-    let result;
-
-    if (debt?.id) {
-      result = await supabase
-        .from("debts")
-        .update(payload)
-        .eq("id", debt.id)
-        .eq("user_id", session.user.id);
-    } else {
-      result = await supabase.from("debts").insert({
-        user_id: session.user.id,
-        ...payload,
-        paid: false,
-      });
-    }
+      paid: false,
+    });
 
     setSaving(false);
 
-    if (result.error) {
-      console.error(result.error);
-      setError(
-        debt
-          ? "Δεν ήταν δυνατή η ενημέρωση της οφειλής."
-          : "Δεν ήταν δυνατή η αποθήκευση της οφειλής.",
-      );
+    if (error) {
+      console.error(error);
+
+      setError(`Δεν ήταν δυνατή η αποθήκευση της οφειλής. ${error.message}`);
+
       return;
     }
 
@@ -883,12 +1090,15 @@ function DebtForm({
   return (
     <>
       <div className="welcome">
-        <h2>{title}</h2>
-        <p>{subtitle}</p>
+        <h2>Νέα οφειλή</h2>
+
+        <p>Καταχωρήστε μια νέα μηνιαία υποχρέωση.</p>
       </div>
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
+          {/* CATEGORY */}
+
           <div className="form-field">
             <label>Κατηγορία</label>
 
@@ -903,6 +1113,8 @@ function DebtForm({
             </select>
           </div>
 
+          {/* PROVIDER */}
+
           <div className="form-field">
             <label>Πάροχος</label>
 
@@ -916,13 +1128,15 @@ function DebtForm({
                 {category ? "Επιλέξτε πάροχο" : "Επιλέξτε πρώτα κατηγορία"}
               </option>
 
-              {providerOptions.map((item) => (
+              {availableProviders.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
               ))}
             </select>
           </div>
+
+          {/* DESCRIPTION */}
 
           <div className="form-field">
             <label>Περιγραφή</label>
@@ -934,6 +1148,8 @@ function DebtForm({
               placeholder="π.χ. Λογαριασμός ηλεκτρικού"
             />
           </div>
+
+          {/* AMOUNT + DATE */}
 
           <div className="form-row">
             <div className="form-field">
@@ -962,7 +1178,11 @@ function DebtForm({
             </div>
           </div>
 
+          {/* ERROR */}
+
           {error && <div className="login-error">{error}</div>}
+
+          {/* ACTIONS */}
 
           <div className="form-actions">
             <button type="button" onClick={onBack}>
@@ -970,7 +1190,194 @@ function DebtForm({
             </button>
 
             <button type="submit" disabled={saving}>
-              {saving ? "Αποθήκευση..." : submitLabel}
+              {saving ? "Αποθήκευση..." : "Αποθήκευση οφειλής"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </>
+  );
+}
+
+/* =========================================================
+   EDIT DEBT
+========================================================= */
+
+function EditDebtPage({ session, debt, onBack, onSaved }) {
+  const [category, setCategory] = useState(debt.category || "");
+
+  const [provider, setProvider] = useState(debt.provider || "");
+
+  const [description, setDescription] = useState(debt.description || "");
+
+  const [amount, setAmount] = useState(debt.amount ?? "");
+
+  const [dueDate, setDueDate] = useState(debt.due_date || "");
+
+  const [saving, setSaving] = useState(false);
+
+  const [error, setError] = useState("");
+
+  const availableProviders = category
+    ? PROVIDER_CATEGORIES[category] || []
+    : [];
+
+  const handleCategoryChange = (event) => {
+    const selectedCategory = event.target.value;
+
+    setCategory(selectedCategory);
+
+    setProvider("");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    setError("");
+
+    if (!category || !provider || !amount || !dueDate) {
+      setError("Συμπληρώστε κατηγορία, πάροχο, ποσό και ημερομηνία λήξης.");
+
+      return;
+    }
+
+    setSaving(true);
+
+    /*
+         Δεν στέλνουμε category,
+         επειδή δεν υπάρχει στη βάση.
+      */
+
+    const { error } = await supabase
+      .from("debts")
+      .update({
+        provider,
+
+        description: description || category,
+
+        amount: Number(amount),
+
+        due_date: dueDate,
+      })
+      .eq("id", debt.id)
+      .eq("user_id", session.user.id);
+
+    setSaving(false);
+
+    if (error) {
+      console.error(error);
+
+      setError(`Δεν ήταν δυνατή η ενημέρωση της οφειλής. ${error.message}`);
+
+      return;
+    }
+
+    onSaved();
+  };
+
+  return (
+    <>
+      <div className="welcome">
+        <h2>Επεξεργασία οφειλής</h2>
+
+        <p>Τροποποιήστε τα στοιχεία της οφειλής.</p>
+      </div>
+
+      <div className="form-container">
+        <form onSubmit={handleSubmit}>
+          {/* CATEGORY */}
+
+          <div className="form-field">
+            <label>Κατηγορία</label>
+
+            <select value={category} onChange={handleCategoryChange} required>
+              <option value="">Επιλέξτε κατηγορία</option>
+
+              {Object.keys(PROVIDER_CATEGORIES).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* PROVIDER */}
+
+          <div className="form-field">
+            <label>Πάροχος</label>
+
+            <select
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+              disabled={!category}
+              required
+            >
+              <option value="">
+                {category ? "Επιλέξτε πάροχο" : "Επιλέξτε πρώτα κατηγορία"}
+              </option>
+
+              {availableProviders.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* DESCRIPTION */}
+
+          <div className="form-field">
+            <label>Περιγραφή</label>
+
+            <input
+              type="text"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder="π.χ. Λογαριασμός ηλεκτρικού"
+            />
+          </div>
+
+          {/* AMOUNT + DATE */}
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Ποσό (€)</label>
+
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Ημερομηνία λήξης</label>
+
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(event) => setDueDate(event.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          {/* ERROR */}
+
+          {error && <div className="login-error">{error}</div>}
+
+          {/* ACTIONS */}
+
+          <div className="form-actions">
+            <button type="button" onClick={onBack}>
+              Ακύρωση
+            </button>
+
+            <button type="submit" disabled={saving}>
+              {saving ? "Αποθήκευση..." : "Αποθήκευση αλλαγών"}
             </button>
           </div>
         </form>
@@ -985,6 +1392,7 @@ function DebtForm({
 
 function ProvidersPage({ session }) {
   const [providers, setProviders] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1013,6 +1421,7 @@ function ProvidersPage({ session }) {
     <>
       <div className="welcome">
         <h2>Πάροχοι</h2>
+
         <p>Οι πάροχοι που χρησιμοποιείτε στις οφειλές σας.</p>
       </div>
 
@@ -1020,6 +1429,7 @@ function ProvidersPage({ session }) {
         <div className="section-header">
           <div>
             <h2>Πάροχοι</h2>
+
             <p>{providers.length} πάροχοι</p>
           </div>
         </div>
@@ -1052,6 +1462,7 @@ function ProvidersPage({ session }) {
 
 function HistoryPage({ session, onEditDebt }) {
   const [debts, setDebts] = useState([]);
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -1064,7 +1475,9 @@ function HistoryPage({ session, onEditDebt }) {
       .select("*")
       .eq("user_id", session.user.id)
       .eq("paid", true)
-      .order("due_date", { ascending: false });
+      .order("due_date", {
+        ascending: false,
+      });
 
     if (!error) {
       setDebts(data || []);
@@ -1077,6 +1490,7 @@ function HistoryPage({ session, onEditDebt }) {
     <>
       <div className="welcome">
         <h2>Ιστορικό</h2>
+
         <p>Οι οφειλές που έχουν εξοφληθεί.</p>
       </div>
 
@@ -1084,6 +1498,7 @@ function HistoryPage({ session, onEditDebt }) {
         <div className="section-header">
           <div>
             <h2>Πληρωμένες οφειλές</h2>
+
             <p>{debts.length} καταχωρήσεις</p>
           </div>
         </div>
@@ -1113,6 +1528,7 @@ function SettingsPage({ session }) {
     <>
       <div className="welcome">
         <h2>Ρυθμίσεις</h2>
+
         <p>Ρυθμίσεις λογαριασμού και εφαρμογής.</p>
       </div>
 
@@ -1120,6 +1536,7 @@ function SettingsPage({ session }) {
         <div className="section-header">
           <div>
             <h2>Λογαριασμός</h2>
+
             <p>{session?.user?.email}</p>
           </div>
         </div>
@@ -1131,5 +1548,9 @@ function SettingsPage({ session }) {
     </>
   );
 }
+
+/* =========================================================
+   EXPORT
+========================================================= */
 
 export default App;
