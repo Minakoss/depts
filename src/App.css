@@ -2280,3 +2280,113 @@ select {
     min-height: 36px;
   }
 }
+/* =========================================================
+   MOBILE HEADER - CENTERED TITLE
+========================================================= */
+
+@media (max-width: 768px) {
+  .mobile-header {
+    position: relative;
+    width: 100%;
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 16px;
+    box-sizing: border-box;
+  }
+
+  /* Κεντρικός τίτλος */
+  .mobile-brand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: auto;
+    margin: 0;
+  }
+
+  /* Αφαιρείται εντελώς το € */
+  .mobile-logo-mark {
+    display: none !important;
+  }
+
+  .mobile-brand-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .mobile-brand-text strong {
+    font-size: 22px;
+    line-height: 1.1;
+    font-weight: 700;
+  }
+
+  .mobile-brand-text span {
+    font-size: 11px;
+    line-height: 1.2;
+    margin-top: 3px;
+    letter-spacing: 1px;
+  }
+
+  /* Κουμπιά δεξιά */
+  .mobile-header-actions {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    position: relative;
+    z-index: 10;
+  }
+
+  .mobile-logout-button,
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 42px;
+    height: 38px;
+
+    border-radius: 6px;
+  }
+
+  /* =======================================================
+     ΑΦΑΙΡΕΣΗ NETLIFY BADGE ΣΤΟ ΚΙΝΗΤΟ
+  ======================================================= */
+
+  #netlify-badge {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  .netlify-badge {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  [data-netlify-badge] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+}
+.mobile-logout-button {
+  background: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  font-size: 27px;
+  color: #111827;
+}

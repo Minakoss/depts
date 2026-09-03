@@ -386,18 +386,16 @@ function Dashboard({ session }) {
       =================================================== */}
 
       <header className="mobile-header">
+        {/* ΚΕΝΤΡΙΚΟΣ ΤΙΤΛΟΣ */}
         <div className="mobile-brand">
-          <div className="mobile-logo-mark">€</div>
-
           <div className="mobile-brand-text">
             <strong>MY DEBTS</strong>
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
 
+        {/* ΚΟΥΜΠΙΑ */}
         <div className="mobile-header-actions">
-          {/* LOGOUT - ΝΕΟ ΒΕΛΑΚΙ */}
-
           <button
             type="button"
             className="mobile-logout-button"
@@ -405,18 +403,7 @@ function Dashboard({ session }) {
             title="Αποσύνδεση"
             aria-label="Αποσύνδεση"
           >
-            ←
-          </button>
-
-          {/* MENU */}
-
-          <button
-            type="button"
-            className="mobile-menu-button"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Μενού"
-          >
-            ☰
+            ↪
           </button>
         </div>
       </header>
