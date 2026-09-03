@@ -463,7 +463,6 @@ select {
   top: 0;
   bottom: 0;
 
-  /* ΑΚΡΙΒΩΣ όπως στο screenshot */
   width: 253px;
 
   display: flex;
@@ -720,7 +719,7 @@ select {
 ========================================================= */
 
 .main-area {
-  margin-left: 0px;
+  margin-left: 0;
 
   width: calc(100% - 253px);
 
@@ -738,7 +737,6 @@ select {
 
   top: 0;
 
-  /* ίδιο ακριβώς με το sidebar */
   left: 253px;
 
   right: 0;
@@ -767,11 +765,6 @@ select {
   flex-direction: column;
   justify-content: center;
 
-  /*
-     Το περιεχόμενο ξεκινά στα 292px.
-     Sidebar = 253px
-     Εσωτερικό περιθώριο = 39px
-  */
   padding-left: 39px;
   padding-right: 30px;
 }
@@ -821,11 +814,6 @@ select {
 
   gap: 20px;
 
-  /*
-     Screenshot:
-     left ≈ 292px
-     right ≈ 30px
-  */
   margin: 33px 30px 22px 39px;
 }
 
@@ -1169,7 +1157,7 @@ select {
 }
 
 /* =========================================================
-   EDIT BUTTON
+   EDIT BUTTON - SIMPLE BLACK ARROW
 ========================================================= */
 
 .edit-debt-button {
@@ -1182,7 +1170,7 @@ select {
   align-items: center;
   justify-content: center;
 
-  margin-left: 8px;
+  margin-left: auto;
 
   padding: 0;
 
@@ -1191,7 +1179,7 @@ select {
 
   background: transparent !important;
 
-  color: #718096 !important;
+  color: #111111 !important;
 
   font-size: 17px;
 
@@ -1209,7 +1197,7 @@ select {
 .edit-debt-button:hover {
   background: transparent !important;
 
-  color: #287bc1 !important;
+  color: #000000 !important;
 
   transform: scale(1.1);
 }
@@ -1615,7 +1603,9 @@ select {
 ========================================================= */
 
 @media (max-width: 700px) {
-  /* LOGIN */
+  /* =======================================================
+     LOGIN
+  ======================================================= */
 
   .login-page {
     position: relative;
@@ -1720,7 +1710,9 @@ select {
     font-size: 10px;
   }
 
-  /* APP */
+  /* =======================================================
+     APP
+  ======================================================= */
 
   .app {
     min-height: 100svh;
@@ -1730,7 +1722,9 @@ select {
     padding-bottom: 70px;
   }
 
-  /* BOTTOM NAV */
+  /* =======================================================
+     BOTTOM NAV
+  ======================================================= */
 
   .sidebar {
     position: fixed;
@@ -1829,7 +1823,9 @@ select {
     display: none;
   }
 
-  /* MAIN */
+  /* =======================================================
+     MAIN
+  ======================================================= */
 
   .main-area {
     width: 100%;
@@ -1847,33 +1843,17 @@ select {
     display: none;
   }
 
-  /* HEADER */
+  /* =======================================================
+     TOP HEADER HIDDEN ON MOBILE
+  ======================================================= */
 
   .welcome {
-    height: auto;
-
-    min-height: 78px;
-
-    padding: 20px 20px 14px;
-
-    background: white;
-
-    border-bottom: 1px solid #e3eaf0;
+    display: none;
   }
 
-  .welcome h2 {
-    font-size: 21px;
-  }
-
-  .welcome p {
-    margin-top: 6px;
-
-    font-size: 10px;
-
-    line-height: 1.4;
-  }
-
-  /* SUMMARY */
+  /* =======================================================
+     SUMMARY
+  ======================================================= */
 
   .summary-grid {
     display: grid;
@@ -1903,7 +1883,9 @@ select {
     font-size: 21px;
   }
 
-  /* DEBTS */
+  /* =======================================================
+     DEBTS
+  ======================================================= */
 
   .debts-section {
     width: auto;
@@ -1935,7 +1917,9 @@ select {
     font-size: 10px;
   }
 
-  /* DEBT ROW */
+  /* =======================================================
+     DEBT ROW
+  ======================================================= */
 
   .debt-row {
     min-height: 0;
@@ -1988,7 +1972,9 @@ select {
     font-size: 9px;
   }
 
-  /* DETAILS */
+  /* =======================================================
+     DETAILS
+  ======================================================= */
 
   .debt-due {
     grid-area: details;
@@ -2036,7 +2022,9 @@ select {
     font-size: 12px;
   }
 
-  /* STATUS */
+  /* =======================================================
+     STATUS
+  ======================================================= */
 
   .debt-status-button {
     grid-column: 1 / -1;
@@ -2056,7 +2044,9 @@ select {
     font-size: 10px;
   }
 
-  /* EDIT */
+  /* =======================================================
+     EDIT / ARROW
+  ======================================================= */
 
   .edit-debt-button {
     grid-area: edit;
@@ -2067,10 +2057,18 @@ select {
 
     margin: 0;
 
+    padding: 0;
+
+    color: #111111 !important;
+
     font-size: 17px;
+
+    justify-self: end;
   }
 
-  /* DELETE */
+  /* =======================================================
+     DELETE
+  ======================================================= */
 
   .delete-debt-button {
     grid-area: delete;
@@ -2082,9 +2080,13 @@ select {
     margin: 0;
 
     font-size: 16px;
+
+    justify-self: end;
   }
 
-  /* FORM */
+  /* =======================================================
+     FORM
+  ======================================================= */
 
   .form-container {
     margin: 16px;
@@ -2133,7 +2135,9 @@ select {
     font-size: 11px;
   }
 
-  /* PROVIDERS */
+  /* =======================================================
+     PROVIDERS
+  ======================================================= */
 
   .provider-list {
     padding: 5px 14px;
@@ -2145,7 +2149,9 @@ select {
     font-size: 11px;
   }
 
-  /* EMPTY */
+  /* =======================================================
+     EMPTY
+  ======================================================= */
 
   .empty-state {
     min-height: 120px;
@@ -2162,12 +2168,6 @@ select {
 
 @media (max-width: 380px) {
   .login-panel {
-    padding-left: 16px;
-
-    padding-right: 16px;
-  }
-
-  .welcome {
     padding-left: 16px;
 
     padding-right: 16px;
@@ -2249,8 +2249,9 @@ select {
     height: 49px;
   }
 
+  /* Το πάνω welcome παραμένει κρυφό στο mobile landscape */
   .welcome {
-    min-height: 70px;
+    display: none;
   }
 }
 
