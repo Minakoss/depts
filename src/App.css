@@ -29,7 +29,9 @@ body {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font-family: inherit;
 }
 
@@ -338,6 +340,7 @@ input {
 
 .login-error {
   margin-bottom: 14px;
+
   padding: 10px 12px;
 
   border-radius: 5px;
@@ -567,6 +570,10 @@ input {
   text-align: left;
 
   cursor: pointer;
+
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 .nav-item:hover {
@@ -793,6 +800,16 @@ input {
   border-radius: 8px;
 
   background: white;
+
+  transition:
+    box-shadow 0.2s,
+    transform 0.2s;
+}
+
+.summary-card:hover {
+  box-shadow: 0 4px 15px rgba(45, 75, 100, 0.06);
+
+  transform: translateY(-1px);
 }
 
 .summary-card span {
@@ -874,10 +891,18 @@ input {
   font-weight: 600;
 
   cursor: pointer;
+
+  transition:
+    background 0.2s,
+    transform 0.1s;
 }
 
 .new-debt-button:hover {
   background: #216da9;
+}
+
+.new-debt-button:active {
+  transform: translateY(1px);
 }
 
 /* =========================================================
@@ -897,11 +922,21 @@ input {
   padding: 12px 20px;
 
   border-bottom: 1px solid #edf1f4;
+
+  transition: background 0.2s;
 }
 
 .debt-row:last-child {
   border-bottom: none;
 }
+
+.debt-row:hover {
+  background: #fbfdff;
+}
+
+/* =========================================================
+   DEBT ICON
+========================================================= */
 
 .debt-icon {
   width: 38px;
@@ -923,7 +958,15 @@ input {
 
   font-size: 13px;
   font-weight: 600;
+
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
+
+/* =========================================================
+   DEBT INFO
+========================================================= */
 
 .debt-info {
   min-width: 0;
@@ -938,6 +981,12 @@ input {
 
   font-size: 12px;
   font-weight: 600;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
 }
 
 .debt-info span {
@@ -948,7 +997,17 @@ input {
   color: #98a5b2;
 
   font-size: 9px;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  text-overflow: ellipsis;
 }
+
+/* =========================================================
+   DUE DATE
+========================================================= */
 
 .debt-due {
   width: 90px;
@@ -977,6 +1036,23 @@ input {
   font-size: 10px;
   font-weight: 500;
 }
+
+/* =========================================================
+   EXPIRED DATE
+========================================================= */
+
+.debt-row.expired .debt-due strong {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.debt-row.expired .debt-due span {
+  color: #ef4444;
+}
+
+/* =========================================================
+   AMOUNT
+========================================================= */
 
 .debt-amount {
   width: 105px;
@@ -1015,11 +1091,12 @@ input {
 
   transition:
     opacity 0.2s,
-    transform 0.1s;
+    transform 0.1s,
+    box-shadow 0.2s;
 }
 
 .debt-status-button:hover {
-  opacity: 0.85;
+  opacity: 0.88;
 }
 
 .debt-status-button:active {
@@ -1033,7 +1110,7 @@ input {
 }
 
 /* =========================================================
-   PAID - STRONG GREEN
+   PAID - GREEN
 ========================================================= */
 
 .debt-status-button.paid {
@@ -1042,14 +1119,97 @@ input {
   color: #08752f;
 }
 
+.debt-status-button.paid:hover {
+  background: #b9e8cb;
+}
+
 /* =========================================================
-   PENDING - STRONG ORANGE
+   PENDING - ORANGE
 ========================================================= */
 
 .debt-status-button.pending {
   background: #ffe0b2;
 
   color: #c45f00;
+}
+
+.debt-status-button.pending:hover {
+  background: #ffd49a;
+}
+
+/* =========================================================
+   EXPIRED - RED
+========================================================= */
+
+.debt-status-button.expired {
+  background: #ffd4d4;
+
+  color: #c62828;
+
+  font-weight: 700;
+}
+
+.debt-status-button.expired:hover {
+  background: #ffc1c1;
+}
+
+/* =========================================================
+   EDIT BUTTON
+========================================================= */
+
+.edit-debt-button {
+  width: 30px;
+  height: 30px;
+
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-left: 8px;
+
+  padding: 0;
+
+  border: none !important;
+  outline: none;
+
+  background: transparent !important;
+
+  color: #7b8794 !important;
+
+  font-size: 15px;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: none !important;
+
+  transition:
+    color 0.2s,
+    background 0.2s,
+    transform 0.15s;
+}
+
+.edit-debt-button:hover {
+  background: #edf5fb !important;
+
+  color: #287bc1 !important;
+
+  border-radius: 6px;
+
+  transform: scale(1.05);
+}
+
+.edit-debt-button:active {
+  transform: scale(0.95);
+}
+
+.edit-debt-button:disabled {
+  opacity: 0.45;
+
+  cursor: wait;
 }
 
 /* =========================================================
@@ -1066,7 +1226,7 @@ input {
   align-items: center;
   justify-content: center;
 
-  margin-left: 10px;
+  margin-left: 4px;
 
   padding: 0;
 
@@ -1087,15 +1247,18 @@ input {
 
   transition:
     color 0.2s,
-    transform 0.1s;
+    transform 0.1s,
+    background 0.2s;
 }
 
 .delete-debt-button:hover {
-  background: transparent !important;
+  background: #fff1f2 !important;
 
   color: #be123c !important;
 
-  transform: scale(1.1);
+  border-radius: 6px;
+
+  transform: scale(1.08);
 }
 
 .delete-debt-button:active {
@@ -1108,6 +1271,147 @@ input {
   color: #e11d48 !important;
 
   opacity: 0.45;
+
+  cursor: wait;
+}
+
+/* =========================================================
+   EDIT MODE
+========================================================= */
+
+.debt-row.editing {
+  padding-top: 18px;
+  padding-bottom: 18px;
+
+  background: #f8fbfe;
+}
+
+.debt-edit-form {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(150px, 1.3fr)
+    minmax(120px, 1fr)
+    minmax(100px, 0.7fr)
+    minmax(140px, 0.8fr)
+    auto;
+
+  gap: 10px;
+
+  align-items: end;
+}
+
+.debt-edit-field {
+  min-width: 0;
+}
+
+.debt-edit-field label {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #8794a2;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 0.6px;
+}
+
+.debt-edit-field input,
+.debt-edit-field select {
+  width: 100%;
+
+  height: 36px;
+
+  padding: 0 9px;
+
+  border: 1px solid #d2dbe4;
+
+  border-radius: 6px;
+
+  background: white;
+
+  color: #354052;
+
+  font-size: 10px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.debt-edit-field input:focus,
+.debt-edit-field select:focus {
+  border-color: #3d8bc9;
+
+  box-shadow: 0 0 0 3px rgba(61, 139, 201, 0.1);
+}
+
+.debt-edit-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+
+  height: 36px;
+}
+
+.debt-edit-save,
+.debt-edit-cancel {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: none;
+
+  border-radius: 6px;
+
+  cursor: pointer;
+
+  font-size: 13px;
+
+  transition:
+    background 0.2s,
+    transform 0.1s;
+}
+
+.debt-edit-save {
+  background: #d7f3e1;
+
+  color: #08752f;
+}
+
+.debt-edit-save:hover {
+  background: #c2ebd1;
+}
+
+.debt-edit-cancel {
+  background: #f0f2f4;
+
+  color: #65727e;
+}
+
+.debt-edit-cancel:hover {
+  background: #e5e8eb;
+}
+
+.debt-edit-save:active,
+.debt-edit-cancel:active {
+  transform: translateY(1px);
+}
+
+.debt-edit-save:disabled,
+.debt-edit-cancel:disabled {
+  opacity: 0.5;
 
   cursor: wait;
 }
@@ -1187,9 +1491,12 @@ input {
   font-weight: 600;
 }
 
-.form-field input {
+.form-field input,
+.form-field select,
+.form-field textarea {
   width: 100%;
-  height: 42px;
+
+  min-height: 42px;
 
   padding: 0 12px;
 
@@ -1203,13 +1510,57 @@ input {
   font-size: 12px;
 
   outline: none;
+
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
-.form-field input:focus {
+.form-field textarea {
+  padding-top: 10px;
+  padding-bottom: 10px;
+
+  resize: vertical;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
   border-color: #3d8bc9;
 
   box-shadow: 0 0 0 3px rgba(61, 139, 201, 0.1);
 }
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: #aeb5bd;
+}
+
+/* =========================================================
+   SELECTS
+========================================================= */
+
+.form-field select {
+  cursor: pointer;
+
+  appearance: auto;
+}
+
+.form-field select:disabled {
+  background: #f4f6f8;
+
+  color: #aeb5bd;
+
+  cursor: not-allowed;
+}
+
+.form-field select option {
+  color: #354052;
+}
+
+/* =========================================================
+   FORM ROW
+========================================================= */
 
 .form-row {
   display: grid;
@@ -1218,6 +1569,10 @@ input {
 
   gap: 18px;
 }
+
+/* =========================================================
+   FORM ACTIONS
+========================================================= */
 
 .form-actions {
   display: flex;
@@ -1245,6 +1600,10 @@ input {
   font-weight: 600;
 
   cursor: pointer;
+
+  transition:
+    opacity 0.2s,
+    transform 0.1s;
 }
 
 .form-actions button:first-child {
@@ -1257,6 +1616,10 @@ input {
   opacity: 0.88;
 }
 
+.form-actions button:active {
+  transform: translateY(1px);
+}
+
 .form-actions button:disabled {
   opacity: 0.6;
 
@@ -1266,6 +1629,31 @@ input {
 /* =========================================================
    TABLET
 ========================================================= */
+
+@media (max-width: 1100px) {
+  .debt-edit-form {
+    grid-template-columns:
+      minmax(130px, 1fr)
+      minmax(110px, 1fr)
+      minmax(90px, 0.7fr)
+      minmax(120px, 0.8fr)
+      auto;
+  }
+
+  .debt-status-button {
+    min-width: 82px;
+
+    margin-left: 10px;
+  }
+
+  .debt-amount {
+    width: 90px;
+  }
+
+  .debt-due {
+    width: 80px;
+  }
+}
 
 @media (max-width: 900px) {
   .login-visual {
@@ -1315,6 +1703,14 @@ input {
     margin-left: 20px;
     margin-right: 20px;
   }
+
+  .debt-edit-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .debt-edit-actions {
+    justify-content: flex-end;
+  }
 }
 
 /* =========================================================
@@ -1348,6 +1744,8 @@ input {
   .login-footer {
     bottom: 15px;
   }
+
+  /* SIDEBAR */
 
   .sidebar {
     width: 68px;
@@ -1394,6 +1792,8 @@ input {
     display: none;
   }
 
+  /* MAIN */
+
   .main-area {
     margin-left: 68px;
 
@@ -1408,20 +1808,52 @@ input {
     padding-left: 20px;
   }
 
+  .welcome h2 {
+    font-size: 19px;
+  }
+
+  /* SUMMARY */
+
   .summary-grid {
     grid-template-columns: 1fr;
 
     margin: 20px;
   }
 
+  /* SECTION */
+
   .debts-section {
     margin: 20px;
   }
+
+  /* HEADER */
+
+  .section-header {
+    gap: 10px;
+
+    padding: 14px;
+  }
+
+  .section-header h2 {
+    font-size: 15px;
+  }
+
+  .new-debt-button {
+    flex-shrink: 0;
+
+    padding: 0 11px;
+
+    font-size: 10px;
+  }
+
+  /* DEBT ROW */
 
   .debt-row {
     flex-wrap: wrap;
 
     gap: 8px;
+
+    padding: 13px 14px;
   }
 
   .debt-info {
@@ -1442,13 +1874,105 @@ input {
 
   .debt-status-button {
     margin-left: 50px;
+
+    min-width: 88px;
   }
+
+  .edit-debt-button {
+    margin-left: auto;
+  }
+
+  .delete-debt-button {
+    margin-left: 0;
+  }
+
+  /* EDIT MODE */
+
+  .debt-row.editing {
+    padding: 14px;
+  }
+
+  .debt-edit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .debt-edit-actions {
+    justify-content: flex-end;
+
+    margin-top: 2px;
+  }
+
+  /* FORM */
 
   .form-container {
     margin: 20px;
+
+    padding: 18px;
   }
 
   .form-row {
     grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 450px) {
+  .sidebar {
+    width: 58px;
+  }
+
+  .main-area {
+    margin-left: 58px;
+
+    width: calc(100% - 58px);
+  }
+
+  .main-area::before {
+    left: 58px;
+  }
+
+  .welcome {
+    padding-left: 15px;
+  }
+
+  .summary-grid {
+    margin: 15px;
+  }
+
+  .debts-section {
+    margin: 15px;
+  }
+
+  .debt-row {
+    padding: 12px;
+  }
+
+  .debt-status-button {
+    margin-left: 0;
+  }
+
+  .debt-due {
+    margin-left: 0;
+  }
+
+  .debt-edit-form {
+    gap: 8px;
+  }
+
+  .form-container {
+    margin: 15px;
+
+    padding: 15px;
   }
 }

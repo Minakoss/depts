@@ -2,6 +2,136 @@ import { useEffect, useState } from "react";
 import { supabase } from "./lib/supabaseClient";
 import "./App.css";
 
+/* =========================================================
+   PROVIDERS / CATEGORIES
+========================================================= */
+
+const PROVIDER_CATEGORIES = {
+  "⚡ Ενέργεια": [
+    "ΔΕΗ",
+    "Protergia",
+    "ΗΡΩΝ",
+    "Elpedison",
+    "NRG",
+    "ZeniΘ",
+    "Volton",
+    "Enerwave",
+    "Φυσικό Αέριο",
+    "Άλλος πάροχος ενέργειας",
+  ],
+
+  "💧 Ύδρευση": [
+    "ΕΥΔΑΠ",
+    "ΕΥΑΘ",
+    "Δημοτική Επιχείρηση Ύδρευσης",
+    "Άλλος πάροχος ύδρευσης",
+  ],
+
+  "📱 Τηλεφωνία & Internet": [
+    "COSMOTE",
+    "Vodafone",
+    "Nova",
+    "ΔΕΗ Fiber",
+    "Inalan",
+    "HCN",
+    "Άλλος πάροχος τηλεφωνίας / Internet",
+  ],
+
+  "🏠 Σπίτι": [
+    "Κοινόχρηστα",
+    "Ενοίκιο",
+    "Πετρέλαιο θέρμανσης",
+    "Θέρμανση",
+    "Ασφάλεια κατοικίας",
+    "Άλλο έξοδο κατοικίας",
+  ],
+
+  "🏦 Τράπεζες & Χρηματοδοτήσεις": [
+    "tbi bank",
+    "Klarna",
+    "Πιστωτική κάρτα",
+    "Καταναλωτικό δάνειο",
+    "Προσωπικό δάνειο",
+    "Στεγαστικό δάνειο",
+    "Άλλη τραπεζική οφειλή",
+  ],
+
+  "🚗 Μετακινήσεις": [
+    "Ασφάλεια αυτοκινήτου",
+    "Τέλη κυκλοφορίας",
+    "ΚΤΕΟ",
+    "Διόδια",
+    "Parking",
+    "Κάρτα ΜΜΜ",
+    "Άλλο έξοδο μετακίνησης",
+  ],
+
+  "🛡️ Ασφάλειες": [
+    "Ασφάλεια αυτοκινήτου",
+    "Ασφάλεια κατοικίας",
+    "Ασφάλεια υγείας",
+    "Ασφάλεια ζωής",
+    "Άλλη ασφάλεια",
+  ],
+
+  "🏛️ Δημόσιο": [
+    "Εφορία / ΑΑΔΕ",
+    "ΕΝΦΙΑ",
+    "Ρύθμιση οφειλών",
+    "ΕΦΚΑ",
+    "Δήμος",
+    "Δημοτικά τέλη",
+    "Πρόστιμο",
+    "Άλλη οφειλή Δημοσίου",
+  ],
+
+  "🛒 Συνδρομές & Υπηρεσίες": [
+    "Netflix",
+    "Spotify",
+    "Apple",
+    "Google",
+    "Amazon",
+    "Microsoft",
+    "ChatGPT",
+    "Γυμναστήριο",
+    "Άλλη συνδρομή",
+  ],
+
+  "📦 Αγορές / Δόσεις": [
+    "Klarna",
+    "tbi bank",
+    "PayPal",
+    "Δόση αγοράς",
+    "Δόση ηλεκτρικής συσκευής",
+    "Δόση επίπλων",
+    "Άλλη δόση",
+  ],
+
+  "📌 Άλλο": ["Άλλη οφειλή"],
+};
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function isDebtExpired(debt) {
+  if (!debt?.due_date || debt?.paid) {
+    return false;
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dueDate = new Date(`${debt.due_date}T00:00:00`);
+  dueDate.setHours(0, 0, 0, 0);
+
+  return dueDate < today;
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
 function App() {
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -175,9 +305,20 @@ function LoginPage() {
 
 function Dashboard({ session }) {
   const [activePage, setActivePage] = useState("dashboard");
+  const [editingDebt, setEditingDebt] = useState(null);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+  };
+
+  const openEditDebt = (debt) => {
+    setEditingDebt(debt);
+    setActivePage("edit-debt");
+  };
+
+  const closeEditDebt = () => {
+    setEditingDebt(null);
+    setActivePage("debts");
   };
 
   return (
@@ -204,7 +345,11 @@ function Dashboard({ session }) {
           </button>
 
           <button
-            className={`nav-item ${activePage === "debts" ? "active" : ""}`}
+            className={`nav-item ${
+              activePage === "debts" || activePage === "new-debt"
+                ? "active"
+                : ""
+            }`}
             onClick={() => setActivePage("debts")}
           >
             <span className="nav-icon">€</span>
@@ -251,8 +396,8 @@ function Dashboard({ session }) {
           </div>
 
           <button
-            onClick={handleLogout}
             className="logout-button"
+            onClick={handleLogout}
             title="Αποσύνδεση"
           >
             ↪
@@ -265,6 +410,7 @@ function Dashboard({ session }) {
           <DashboardHome
             session={session}
             onNewDebt={() => setActivePage("new-debt")}
+            onEditDebt={openEditDebt}
           />
         )}
 
@@ -272,20 +418,32 @@ function Dashboard({ session }) {
           <DebtsPage
             session={session}
             onNewDebt={() => setActivePage("new-debt")}
+            onEditDebt={openEditDebt}
           />
         )}
 
         {activePage === "providers" && <ProvidersPage session={session} />}
 
-        {activePage === "history" && <HistoryPage session={session} />}
+        {activePage === "history" && (
+          <HistoryPage session={session} onEditDebt={openEditDebt} />
+        )}
 
         {activePage === "settings" && <SettingsPage session={session} />}
 
         {activePage === "new-debt" && (
           <NewDebtPage
             session={session}
-            onBack={() => setActivePage("dashboard")}
+            onBack={() => setActivePage("debts")}
             onSaved={() => setActivePage("debts")}
+          />
+        )}
+
+        {activePage === "edit-debt" && editingDebt && (
+          <EditDebtPage
+            session={session}
+            debt={editingDebt}
+            onBack={closeEditDebt}
+            onSaved={closeEditDebt}
           />
         )}
       </main>
@@ -297,9 +455,13 @@ function Dashboard({ session }) {
    DASHBOARD HOME
 ========================================================= */
 
-function DashboardHome({ session, onNewDebt }) {
+function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDebts();
+  }, []);
 
   const loadDebts = async () => {
     setLoading(true);
@@ -310,19 +472,12 @@ function DashboardHome({ session, onNewDebt }) {
       .eq("user_id", session.user.id)
       .order("due_date", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      setDebts([]);
-    } else {
+    if (!error) {
       setDebts(data || []);
     }
 
     setLoading(false);
   };
-
-  useEffect(() => {
-    loadDebts();
-  }, [session.user.id]);
 
   const total = debts.reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
@@ -330,7 +485,9 @@ function DashboardHome({ session, onNewDebt }) {
     .filter((debt) => debt.paid)
     .reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
-  const pending = total - paid;
+  const pending = debts
+    .filter((debt) => !debt.paid)
+    .reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
   return (
     <>
@@ -379,7 +536,7 @@ function DashboardHome({ session, onNewDebt }) {
             </div>
           ) : (
             debts.map((debt) => (
-              <DebtRow key={debt.id} debt={debt} onChanged={loadDebts} />
+              <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
             ))
           )}
         </div>
@@ -389,12 +546,16 @@ function DashboardHome({ session, onNewDebt }) {
 }
 
 /* =========================================================
-   DEBTS
+   DEBTS PAGE
 ========================================================= */
 
-function DebtsPage({ session, onNewDebt }) {
+function DebtsPage({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadDebts();
+  }, []);
 
   const loadDebts = async () => {
     setLoading(true);
@@ -405,19 +566,12 @@ function DebtsPage({ session, onNewDebt }) {
       .eq("user_id", session.user.id)
       .order("due_date", { ascending: true });
 
-    if (error) {
-      console.error(error);
-      setDebts([]);
-    } else {
+    if (!error) {
       setDebts(data || []);
     }
 
     setLoading(false);
   };
-
-  useEffect(() => {
-    loadDebts();
-  }, [session.user.id]);
 
   return (
     <>
@@ -447,7 +601,7 @@ function DebtsPage({ session, onNewDebt }) {
             </div>
           ) : (
             debts.map((debt) => (
-              <DebtRow key={debt.id} debt={debt} onChanged={loadDebts} />
+              <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
             ))
           )}
         </div>
@@ -460,17 +614,25 @@ function DebtsPage({ session, onNewDebt }) {
    DEBT ROW
 ========================================================= */
 
-function DebtRow({ debt, onChanged }) {
+function DebtRow({ debt, onEdit }) {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const expired = isDebtExpired(debt);
 
   const formattedDate = debt.due_date
     ? new Date(`${debt.due_date}T00:00:00`).toLocaleDateString("el-GR")
     : "-";
 
-  const togglePaid = async () => {
-    if (updating || deleting) return;
+  const statusClass = debt.paid ? "paid" : expired ? "expired" : "pending";
 
+  const statusText = debt.paid
+    ? "✓ Πληρώθηκε"
+    : expired
+      ? "Έχει λήξει"
+      : "Εκκρεμεί";
+
+  const togglePaid = async () => {
     setUpdating(true);
 
     const { error } = await supabase
@@ -478,35 +640,29 @@ function DebtRow({ debt, onChanged }) {
       .update({
         paid: !debt.paid,
       })
-      .eq("id", debt.id)
-      .eq("user_id", debt.user_id);
+      .eq("id", debt.id);
 
     if (error) {
       console.error(error);
-      alert("Δεν ήταν δυνατή η ενημέρωση της οφειλής.");
-    } else {
-      await onChanged?.();
+      setUpdating(false);
+      return;
     }
 
-    setUpdating(false);
+    window.location.reload();
   };
 
   const deleteDebt = async () => {
-    if (deleting || updating) return;
-
     const confirmed = window.confirm(
-      `Θέλετε σίγουρα να διαγράψετε την οφειλή "${debt.provider}" ;`,
+      `Θέλετε να διαγράψετε την οφειλή "${debt.provider}" ;`,
     );
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setDeleting(true);
 
-    const { error } = await supabase
-      .from("debts")
-      .delete()
-      .eq("id", debt.id)
-      .eq("user_id", debt.user_id);
+    const { error } = await supabase.from("debts").delete().eq("id", debt.id);
 
     if (error) {
       console.error(error);
@@ -515,13 +671,11 @@ function DebtRow({ debt, onChanged }) {
       return;
     }
 
-    await onChanged?.();
-
-    setDeleting(false);
+    window.location.reload();
   };
 
   return (
-    <div className="debt-row">
+    <div className={`debt-row ${expired && !debt.paid ? "debt-expired" : ""}`}>
       <div className="debt-icon">
         {debt.provider?.charAt(0)?.toUpperCase() || "€"}
       </div>
@@ -533,29 +687,43 @@ function DebtRow({ debt, onChanged }) {
 
       <div className="debt-due">
         <span>ΛΗΞΗ</span>
-        <strong>{formattedDate}</strong>
+        <strong className={expired && !debt.paid ? "expired-date" : ""}>
+          {formattedDate}
+        </strong>
       </div>
 
       <div className="debt-amount">
-        <strong>{Number(debt.amount || 0).toFixed(2)} €</strong>
+        <strong>{Number(debt.amount).toFixed(2)} €</strong>
       </div>
 
       <button
         type="button"
-        className={`debt-status-button ${debt.paid ? "paid" : "pending"}`}
+        className={`debt-status-button ${statusClass}`}
         onClick={togglePaid}
         disabled={updating || deleting}
-        title={debt.paid ? "Επαναφορά σε εκκρεμή" : "Σήμανση ως πληρωμένη"}
+        title={debt.paid ? "Σήμανση ως εκκρεμή" : "Σήμανση ως πληρωμένη"}
       >
-        {updating ? "..." : debt.paid ? "✓ Πληρώθηκε" : "Εκκρεμεί"}
+        {updating ? "..." : statusText}
+      </button>
+
+      <button
+        type="button"
+        className="edit-debt-button"
+        onClick={() => onEdit(debt)}
+        disabled={updating || deleting}
+        title="Επεξεργασία οφειλής"
+        aria-label="Επεξεργασία οφειλής"
+      >
+        ✎
       </button>
 
       <button
         type="button"
         className="delete-debt-button"
         onClick={deleteDebt}
-        disabled={deleting || updating}
+        disabled={updating || deleting}
         title="Διαγραφή οφειλής"
+        aria-label="Διαγραφή οφειλής"
       >
         🗑
       </button>
@@ -568,6 +736,50 @@ function DebtRow({ debt, onChanged }) {
 ========================================================= */
 
 function NewDebtPage({ session, onBack, onSaved }) {
+  return (
+    <DebtForm
+      session={session}
+      title="Νέα οφειλή"
+      subtitle="Καταχωρήστε μια νέα μηνιαία υποχρέωση."
+      submitLabel="Αποθήκευση οφειλής"
+      onBack={onBack}
+      onSaved={onSaved}
+    />
+  );
+}
+
+/* =========================================================
+   EDIT DEBT
+========================================================= */
+
+function EditDebtPage({ session, debt, onBack, onSaved }) {
+  return (
+    <DebtForm
+      session={session}
+      debt={debt}
+      title="Επεξεργασία οφειλής"
+      subtitle="Τροποποιήστε τα στοιχεία της οφειλής."
+      submitLabel="Αποθήκευση αλλαγών"
+      onBack={onBack}
+      onSaved={onSaved}
+    />
+  );
+}
+
+/* =========================================================
+   DEBT FORM
+========================================================= */
+
+function DebtForm({
+  session,
+  debt = null,
+  title,
+  subtitle,
+  submitLabel,
+  onBack,
+  onSaved,
+}) {
+  const [category, setCategory] = useState("");
   const [provider, setProvider] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -575,32 +787,93 @@ function NewDebtPage({ session, onBack, onSaved }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!debt) {
+      setCategory("");
+      setProvider("");
+      setDescription("");
+      setAmount("");
+      setDueDate("");
+      return;
+    }
+
+    const detectedCategory =
+      Object.entries(PROVIDER_CATEGORIES).find(([, providers]) =>
+        providers.includes(debt.provider),
+      )?.[0] || "";
+
+    setCategory(detectedCategory);
+    setProvider(debt.provider || "");
+    setDescription(debt.description || "");
+    setAmount(debt.amount ?? "");
+    setDueDate(debt.due_date || "");
+  }, [debt]);
+
+  const availableProviders = category
+    ? PROVIDER_CATEGORIES[category] || []
+    : [];
+
+  /*
+   * Σε περίπτωση που υπάρχει παλιός/χειροκίνητος πάροχος
+   * που δεν υπάρχει πλέον στη λίστα, τον εμφανίζουμε
+   * προσωρινά ώστε να μη χαθεί κατά την επεξεργασία.
+   */
+  const providerOptions =
+    provider && !availableProviders.includes(provider)
+      ? [provider, ...availableProviders]
+      : availableProviders;
+
+  const handleCategoryChange = (event) => {
+    const selectedCategory = event.target.value;
+
+    setCategory(selectedCategory);
+    setProvider("");
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     setError("");
 
-    if (!provider || !amount || !dueDate) {
-      setError("Συμπληρώστε πάροχο, ποσό και ημερομηνία λήξης.");
+    if (!category || !provider || !amount || !dueDate) {
+      setError("Συμπληρώστε κατηγορία, πάροχο, ποσό και ημερομηνία λήξης.");
       return;
     }
 
     setSaving(true);
 
-    const { error } = await supabase.from("debts").insert({
-      user_id: session.user.id,
+    const payload = {
       provider,
-      description: description || null,
+      description: description || category,
       amount: Number(amount),
       due_date: dueDate,
-      paid: false,
-    });
+    };
+
+    let result;
+
+    if (debt?.id) {
+      result = await supabase
+        .from("debts")
+        .update(payload)
+        .eq("id", debt.id)
+        .eq("user_id", session.user.id);
+    } else {
+      result = await supabase.from("debts").insert({
+        user_id: session.user.id,
+        ...payload,
+        paid: false,
+      });
+    }
 
     setSaving(false);
 
-    if (error) {
-      console.error(error);
-      setError("Δεν ήταν δυνατή η αποθήκευση της οφειλής.");
+    if (result.error) {
+      console.error(result.error);
+      setError(
+        debt
+          ? "Δεν ήταν δυνατή η ενημέρωση της οφειλής."
+          : "Δεν ήταν δυνατή η αποθήκευση της οφειλής.",
+      );
       return;
     }
 
@@ -610,22 +883,45 @@ function NewDebtPage({ session, onBack, onSaved }) {
   return (
     <>
       <div className="welcome">
-        <h2>Νέα οφειλή</h2>
-        <p>Καταχωρήστε μια νέα μηνιαία υποχρέωση.</p>
+        <h2>{title}</h2>
+        <p>{subtitle}</p>
       </div>
 
       <div className="form-container">
         <form onSubmit={handleSubmit}>
           <div className="form-field">
+            <label>Κατηγορία</label>
+
+            <select value={category} onChange={handleCategoryChange} required>
+              <option value="">Επιλέξτε κατηγορία</option>
+
+              {Object.keys(PROVIDER_CATEGORIES).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-field">
             <label>Πάροχος</label>
 
-            <input
-              type="text"
+            <select
               value={provider}
               onChange={(event) => setProvider(event.target.value)}
-              placeholder="π.χ. ΔΕΗ, ΟΤΕ, ΕΥΔΑΠ"
+              disabled={!category}
               required
-            />
+            >
+              <option value="">
+                {category ? "Επιλέξτε πάροχο" : "Επιλέξτε πρώτα κατηγορία"}
+              </option>
+
+              {providerOptions.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="form-field">
@@ -674,7 +970,7 @@ function NewDebtPage({ session, onBack, onSaved }) {
             </button>
 
             <button type="submit" disabled={saving}>
-              {saving ? "Αποθήκευση..." : "Αποθήκευση οφειλής"}
+              {saving ? "Αποθήκευση..." : submitLabel}
             </button>
           </div>
         </form>
@@ -692,31 +988,26 @@ function ProvidersPage({ session }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadProviders = async () => {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("debts")
-        .select("provider")
-        .eq("user_id", session.user.id)
-        .order("provider");
-
-      if (error) {
-        console.error(error);
-        setProviders([]);
-      } else if (data) {
-        const uniqueProviders = [
-          ...new Set(data.map((item) => item.provider).filter(Boolean)),
-        ];
-
-        setProviders(uniqueProviders);
-      }
-
-      setLoading(false);
-    };
-
     loadProviders();
-  }, [session.user.id]);
+  }, []);
+
+  const loadProviders = async () => {
+    const { data, error } = await supabase
+      .from("debts")
+      .select("provider")
+      .eq("user_id", session.user.id)
+      .order("provider");
+
+    if (!error && data) {
+      const uniqueProviders = [
+        ...new Set(data.map((item) => item.provider).filter(Boolean)),
+      ];
+
+      setProviders(uniqueProviders);
+    }
+
+    setLoading(false);
+  };
 
   return (
     <>
@@ -759,33 +1050,28 @@ function ProvidersPage({ session }) {
    HISTORY
 ========================================================= */
 
-function HistoryPage({ session }) {
+function HistoryPage({ session, onEditDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadHistory = async () => {
-      setLoading(true);
-
-      const { data, error } = await supabase
-        .from("debts")
-        .select("*")
-        .eq("user_id", session.user.id)
-        .eq("paid", true)
-        .order("due_date", { ascending: false });
-
-      if (error) {
-        console.error(error);
-        setDebts([]);
-      } else {
-        setDebts(data || []);
-      }
-
-      setLoading(false);
-    };
-
     loadHistory();
-  }, [session.user.id]);
+  }, []);
+
+  const loadHistory = async () => {
+    const { data, error } = await supabase
+      .from("debts")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .eq("paid", true)
+      .order("due_date", { ascending: false });
+
+    if (!error) {
+      setDebts(data || []);
+    }
+
+    setLoading(false);
+  };
 
   return (
     <>
@@ -809,15 +1095,7 @@ function HistoryPage({ session }) {
             <div className="empty-state">Δεν υπάρχουν πληρωμένες οφειλές.</div>
           ) : (
             debts.map((debt) => (
-              <DebtRow
-                key={debt.id}
-                debt={debt}
-                onChanged={() => {
-                  setDebts((current) =>
-                    current.filter((item) => item.id !== debt.id),
-                  );
-                }}
-              />
+              <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
             ))
           )}
         </div>
