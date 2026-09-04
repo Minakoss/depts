@@ -431,7 +431,7 @@ function Dashboard({ session }) {
             title="Αποσύνδεση"
             aria-label="Αποσύνδεση"
           >
-            ↪
+            ←
           </button>
         </div>
       </header>

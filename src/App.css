@@ -2527,3 +2527,63 @@ select {
     min-width: 0;
   }
 }
+/* =========================================================
+   MOBILE LOGOUT BUTTON
+   Χωρίς πλαίσιο / χωρίς background
+========================================================= */
+
+.mobile-logout-button {
+  appearance: none;
+  -webkit-appearance: none;
+
+  border: none !important;
+  outline: none !important;
+
+  background: transparent !important;
+  background-color: transparent !important;
+
+  box-shadow: none !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  width: auto !important;
+  height: auto !important;
+
+  min-width: 0 !important;
+  min-height: 0 !important;
+
+  border-radius: 0 !important;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #334155 !important;
+
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-logout-button:hover,
+.mobile-logout-button:focus,
+.mobile-logout-button:active {
+  background: transparent !important;
+  background-color: transparent !important;
+
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+
+  color: #334155 !important;
+}
+.mobile-logout-button {
+  font-family: "Arial", sans-serif !important;
+  font-variant-emoji: text;
+}
