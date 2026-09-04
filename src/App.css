@@ -2626,3 +2626,204 @@ select {
     z-index: 1;
   }
 }
+/* =========================================================
+   MOBILE / LANDSCAPE HEADER
+   MY DEBTS + PERSONAL FINANCE ΚΕΝΤΡΟ
+   LOGOUT ΒΕΛΑΚΙ ΔΕΞΙΑ
+========================================================= */
+
+@media screen and (max-width: 1100px) {
+  .mobile-header {
+    width: 100% !important;
+    max-width: none !important;
+
+    position: relative !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    min-height: 110px !important;
+
+    padding: 18px 70px !important;
+    margin: 0 !important;
+
+    box-sizing: border-box !important;
+
+    background: #f4f8fc !important;
+
+    border: none !important;
+    box-shadow: none !important;
+
+    z-index: 100 !important;
+  }
+
+  /* =====================================================
+     ΤΙΤΛΟΣ
+  ===================================================== */
+
+  .mobile-brand {
+    width: 100% !important;
+
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+
+    text-align: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .mobile-brand-text {
+    display: flex !important;
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    text-align: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .mobile-brand-text strong {
+    display: block !important;
+
+    font-size: 32px !important;
+    line-height: 1.1 !important;
+
+    letter-spacing: 0 !important;
+
+    white-space: nowrap !important;
+
+    color: #334155 !important;
+  }
+
+  .mobile-brand-text span {
+    display: block !important;
+
+    margin-top: 5px !important;
+
+    font-size: 18px !important;
+    line-height: 1.2 !important;
+
+    letter-spacing: 3px !important;
+
+    white-space: nowrap !important;
+
+    color: #334155 !important;
+  }
+
+  /* =====================================================
+     ΚΟΥΜΠΙ ΑΠΟΣΥΝΔΕΣΗΣ
+     ΤΕΡΜΑ ΔΕΞΙΑ - ΧΩΡΙΣ ΠΛΑΙΣΙΟ
+  ===================================================== */
+
+  .mobile-header-actions {
+    position: absolute !important;
+
+    right: 25px !important;
+    top: 50% !important;
+
+    transform: translateY(-50%) !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .mobile-logout-button {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+
+    border: none !important;
+    outline: none !important;
+
+    background: transparent !important;
+    background-color: transparent !important;
+
+    box-shadow: none !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    min-width: 0 !important;
+    min-height: 0 !important;
+
+    padding: 5px !important;
+    margin: 0 !important;
+
+    border-radius: 0 !important;
+
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    color: #334155 !important;
+
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 36px !important;
+    font-weight: 400 !important;
+
+    line-height: 1 !important;
+
+    cursor: pointer !important;
+
+    -webkit-tap-highlight-color: transparent !important;
+  }
+
+  .mobile-logout-button:hover,
+  .mobile-logout-button:focus,
+  .mobile-logout-button:active {
+    border: none !important;
+    outline: none !important;
+
+    background: transparent !important;
+    box-shadow: none !important;
+
+    color: #334155 !important;
+  }
+
+  /* =====================================================
+     ΑΦΑΙΡΕΣΗ ΠΑΛΙΟΥ MOBILE MENU BUTTON
+  ===================================================== */
+
+  .mobile-menu-button {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   LANDSCAPE
+========================================================= */
+
+@media screen and (max-width: 1100px) and (orientation: landscape) {
+  .mobile-header {
+    min-height: 95px !important;
+
+    padding-left: 100px !important;
+    padding-right: 100px !important;
+  }
+
+  .mobile-brand-text strong {
+    font-size: 30px !important;
+  }
+
+  .mobile-brand-text span {
+    font-size: 16px !important;
+    letter-spacing: 3px !important;
+  }
+
+  .mobile-header-actions {
+    right: 35px !important;
+  }
+
+  .mobile-logout-button {
+    font-size: 34px !important;
+  }
+}
