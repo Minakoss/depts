@@ -173,6 +173,36 @@ function sortDebts(debts) {
 }
 
 /* =========================================================
+   MONTH HELPERS
+========================================================= */
+
+function getCurrentMonth() {
+  const today = new Date();
+
+  return new Date(today.getFullYear(), today.getMonth(), 1);
+}
+
+function formatMonthYear(date) {
+  return date.toLocaleDateString("el-GR", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function formatMonth(date) {
+  return date.toLocaleDateString("el-GR", {
+    month: "long",
+  });
+}
+
+function getDateForMonth(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+
+  return `${year}-${month}-01`;
+}
+
+/* =========================================================
    APP
 ========================================================= */
 
@@ -386,7 +416,6 @@ function Dashboard({ session }) {
       =================================================== */}
 
       <header className="mobile-header">
-        {/* ΚΕΝΤΡΙΚΟΣ ΤΙΤΛΟΣ */}
         <div className="mobile-brand">
           <div className="mobile-brand-text">
             <strong>MY DEBTS</strong>
@@ -394,7 +423,6 @@ function Dashboard({ session }) {
           </div>
         </div>
 
-        {/* ΚΟΥΜΠΙΑ */}
         <div className="mobile-header-actions">
           <button
             type="button"
@@ -493,8 +521,6 @@ function Dashboard({ session }) {
       =================================================== */}
 
       <aside className="sidebar">
-        {/* LOGO */}
-
         <div className="sidebar-logo">
           <div className="logo-mark">€</div>
 
@@ -503,8 +529,6 @@ function Dashboard({ session }) {
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
-
-        {/* NAVIGATION */}
 
         <nav className="sidebar-nav">
           <div className="nav-title">ΚΥΡΙΟ ΜΕΝΟΥ</div>
@@ -554,8 +578,6 @@ function Dashboard({ session }) {
           </button>
         </nav>
 
-        {/* USER */}
-
         <div className="sidebar-footer">
           <div className="user-avatar">
             {session?.user?.email?.charAt(0).toUpperCase()}
@@ -565,8 +587,6 @@ function Dashboard({ session }) {
             <strong>{session?.user?.email}</strong>
             <span>Συνδεδεμένος</span>
           </div>
-
-          {/* LOGOUT - ΝΕΟ ΒΕΛΑΚΙ */}
 
           <button
             className="logout-button"
@@ -641,6 +661,12 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const [debts, setDebts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /* =======================================================
+     SELECTED MONTH
+  ======================================================= */
+
+  const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
+
   useEffect(() => {
     loadDebts();
   }, []);
@@ -662,25 +688,104 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     setLoading(false);
   };
 
-  const total = debts.reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
+  /* =======================================================
+     CHANGE MONTH
+  ======================================================= */
 
-  const paid = debts
+  const changeMonth = (amount) => {
+    setSelectedMonth(
+      new Date(
+        selectedMonth.getFullYear(),
+        selectedMonth.getMonth() + amount,
+        1,
+      ),
+    );
+  };
+
+  /* =======================================================
+     FILTER DEBTS BY MONTH
+  ======================================================= */
+
+  const monthDebts = debts.filter((debt) => {
+    if (!debt.due_date) {
+      return false;
+    }
+
+    const debtDate = new Date(`${debt.due_date}T00:00:00`);
+
+    return (
+      debtDate.getFullYear() === selectedMonth.getFullYear() &&
+      debtDate.getMonth() === selectedMonth.getMonth()
+    );
+  });
+
+  /* =======================================================
+     TOTALS
+  ======================================================= */
+
+  const total = monthDebts.reduce(
+    (sum, debt) => sum + Number(debt.amount || 0),
+    0,
+  );
+
+  const paid = monthDebts
     .filter((debt) => debt.paid)
     .reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
-  const pending = debts
+  const pending = monthDebts
     .filter((debt) => !debt.paid)
     .reduce((sum, debt) => sum + Number(debt.amount || 0), 0);
 
   return (
     <>
-      <div className="welcome">
-        <h2>Επισκόπηση</h2>
+      {/* ===================================================
+          WELCOME
+      =================================================== */}
 
-        <p>
-          Παρακάτω βλέπετε την οικονομική σας εικόνα για τον επιλεγμένο μήνα.
-        </p>
+      <div className="welcome">
+        <div className="welcome-header">
+          <div>
+            <h2>Επισκόπηση</h2>
+
+            <p>
+              Παρακάτω βλέπετε την οικονομική σας εικόνα για τον επιλεγμένο
+              μήνα.
+            </p>
+          </div>
+
+          {/* =================================================
+              MONTH SELECTOR
+          ================================================= */}
+
+          <div className="month-selector">
+            <button
+              type="button"
+              className="month-arrow"
+              onClick={() => changeMonth(-1)}
+              aria-label="Προηγούμενος μήνας"
+            >
+              ‹
+            </button>
+
+            <div className="month-current">
+              {formatMonthYear(selectedMonth)}
+            </div>
+
+            <button
+              type="button"
+              className="month-arrow"
+              onClick={() => changeMonth(1)}
+              aria-label="Επόμενος μήνας"
+            >
+              ›
+            </button>
+          </div>
+        </div>
       </div>
+
+      {/* ===================================================
+          SUMMARY
+      =================================================== */}
 
       <div className="summary-grid">
         <div className="summary-card">
@@ -699,11 +804,21 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         </div>
       </div>
 
+      {/* ===================================================
+          DEBTS
+      =================================================== */}
+
       <div className="debts-section">
         <div className="section-header">
           <div>
-            <h2>Οφειλές</h2>
-            <p>{debts.length} καταχωρήσεις</p>
+            <h2>
+              Οφειλές{" "}
+              <span className="section-month">
+                {formatMonth(selectedMonth)}
+              </span>
+            </h2>
+
+            <p>{monthDebts.length} καταχωρήσεις</p>
           </div>
 
           <button className="new-debt-button" onClick={onNewDebt}>
@@ -714,12 +829,12 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         <div className="debts-list">
           {loading ? (
             <div className="empty-state">Φόρτωση...</div>
-          ) : debts.length === 0 ? (
+          ) : monthDebts.length === 0 ? (
             <div className="empty-state">
-              Δεν υπάρχουν ακόμα καταχωρημένες οφειλές.
+              Δεν υπάρχουν καταχωρημένες οφειλές για τον επιλεγμένο μήνα.
             </div>
           ) : (
-            debts.map((debt) => (
+            monthDebts.map((debt) => (
               <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
             ))
           )}
@@ -931,7 +1046,11 @@ function NewDebtPage({ session, onBack, onSaved }) {
   const [provider, setProvider] = useState("");
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
-  const [dueDate, setDueDate] = useState("");
+
+  const [selectedMonth] = useState(getCurrentMonth());
+
+  const [dueDate, setDueDate] = useState(getDateForMonth(selectedMonth));
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -961,6 +1080,7 @@ function NewDebtPage({ session, onBack, onSaved }) {
 
     const { error } = await supabase.from("debts").insert({
       user_id: session.user.id,
+      category,
       provider,
       description: description || category,
       amount: Number(amount),
@@ -985,6 +1105,7 @@ function NewDebtPage({ session, onBack, onSaved }) {
     <>
       <div className="welcome">
         <h2>Νέα οφειλή</h2>
+
         <p>Καταχωρήστε μια νέα μηνιαία υποχρέωση.</p>
       </div>
 
@@ -1086,13 +1207,9 @@ function NewDebtPage({ session, onBack, onSaved }) {
 
 function EditDebtPage({ session, debt, onBack, onSaved }) {
   const [category, setCategory] = useState(debt.category || "");
-
   const [provider, setProvider] = useState(debt.provider || "");
-
   const [description, setDescription] = useState(debt.description || "");
-
   const [amount, setAmount] = useState(debt.amount ?? "");
-
   const [dueDate, setDueDate] = useState(debt.due_date || "");
 
   const [saving, setSaving] = useState(false);
@@ -1125,6 +1242,7 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
     const { error } = await supabase
       .from("debts")
       .update({
+        category,
         provider,
         description: description || category,
         amount: Number(amount),
