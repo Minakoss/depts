@@ -2587,3 +2587,42 @@ select {
   font-family: "Arial", sans-serif !important;
   font-variant-emoji: text;
 }
+/* =========================================================
+   MOBILE LANDSCAPE
+   Προστασία περιεχομένου από το επάνω header
+========================================================= */
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .mobile-header {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    z-index: 20 !important;
+  }
+
+  .main-area {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .app {
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  /* Το περιεχόμενο ξεκινά κάτω από το header */
+  .main-area {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Αποφυγή overlap κατά το scroll */
+  .welcome,
+  .summary-grid,
+  .debts-section,
+  .form-container {
+    position: relative;
+    z-index: 1;
+  }
+}
