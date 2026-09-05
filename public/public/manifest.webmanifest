@@ -1,0 +1,22 @@
+{
+  "name": "MY DEBTS",
+  "short_name": "MY DEBTS",
+  "description": "Personal Finance & Debt Manager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f9fd",
+  "theme_color": "#287bc1",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

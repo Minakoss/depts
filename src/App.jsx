@@ -1,4 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
+import {
+  subscribeToPush,
+  unsubscribeFromPush,
+  saveNotificationSettings,
+  loadNotificationSettings,
+} from "./notifications";
 import { supabase } from "./lib/supabaseClient";
 import "./App.css";
 
@@ -4788,130 +4794,165 @@ function HistoryPage({ session }) {
 ========================================================= */
 
 function SettingsPage({ session }) {
-  const [settings, setSettings] = useState({
-    enabled: false,
-    days_before: 3,
-  });
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  const [daysBefore, setDaysBefore] = useState(3);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  const loadSettings = async () => {
-    setLoading(true);
-
-    const { data, error } = await supabase
-      .from("notification_settings")
-      .select("*")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
-    if (!error && data) {
-      setSettings({
-        enabled: data.enabled,
-        days_before: data.days_before,
-      });
-    }
-
-    if (error) {
-      console.error(error);
-    }
-
-    setLoading(false);
-  };
+  /* -------------------------------------------------------
+     LOAD SETTINGS
+  ------------------------------------------------------- */
 
   useEffect(() => {
-    loadSettings();
-  }, [session.user.id]);
+    async function loadSettings() {
+      try {
+        setLoading(true);
+        setError("");
 
-  const saveSettings = async () => {
+        const settings = await loadNotificationSettings(session);
+
+        setNotificationsEnabled(Boolean(settings.enabled));
+
+        setDaysBefore(Number(settings.days_before ?? 3));
+      } catch (err) {
+        console.error(err);
+
+        setError("Δεν ήταν δυνατή η φόρτωση των ρυθμίσεων ειδοποιήσεων.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (session?.user?.id) {
+      loadSettings();
+    }
+  }, [session]);
+
+  /* -------------------------------------------------------
+     TOGGLE NOTIFICATIONS
+  ------------------------------------------------------- */
+
+  async function handleNotificationToggle() {
+    if (saving) {
+      return;
+    }
+
+    setMessage("");
+    setError("");
     setSaving(true);
 
-    const { error } = await supabase.from("notification_settings").upsert(
-      {
-        user_id: session.user.id,
-        enabled: settings.enabled,
-        days_before: Number(settings.days_before),
-        updated_at: new Date().toISOString(),
-      },
-      {
-        onConflict: "user_id",
-      },
-    );
+    const newValue = !notificationsEnabled;
 
-    setSaving(false);
+    try {
+      /* -----------------------------------------------
+         ENABLE
+      ----------------------------------------------- */
 
-    if (error) {
-      console.error(error);
-      alert("Δεν ήταν δυνατή η αποθήκευση των ρυθμίσεων.");
-      return;
+      if (newValue) {
+        const permission = await Notification.requestPermission();
+
+        if (permission !== "granted") {
+          setNotificationsEnabled(false);
+
+          setError("Η άδεια για τις ειδοποιήσεις δεν δόθηκε.");
+
+          return;
+        }
+
+        await subscribeToPush(session);
+
+        await saveNotificationSettings(session, true, daysBefore);
+
+        setNotificationsEnabled(true);
+
+        setMessage("Οι ειδοποιήσεις ενεργοποιήθηκαν επιτυχώς.");
+      } else {
+        /* -----------------------------------------------
+         DISABLE
+      ----------------------------------------------- */
+        await unsubscribeFromPush(session);
+
+        await saveNotificationSettings(session, false, daysBefore);
+
+        setNotificationsEnabled(false);
+
+        setMessage("Οι ειδοποιήσεις απενεργοποιήθηκαν.");
+      }
+    } catch (err) {
+      console.error("Notification toggle error:", err);
+
+      setNotificationsEnabled(false);
+
+      setError(err?.message || "Δεν ήταν δυνατή η ρύθμιση των ειδοποιήσεων.");
+    } finally {
+      setSaving(false);
     }
-
-    alert("Οι ρυθμίσεις αποθηκεύτηκαν.");
-  };
-
-  const requestNotifications = async () => {
-    if (!("Notification" in window)) {
-      alert("Ο browser σου δεν υποστηρίζει ειδοποιήσεις.");
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-
-    if (permission === "granted") {
-      setSettings((prev) => ({
-        ...prev,
-        enabled: true,
-      }));
-
-      alert("Οι ειδοποιήσεις ενεργοποιήθηκαν.");
-    } else {
-      setSettings((prev) => ({
-        ...prev,
-        enabled: false,
-      }));
-
-      alert("Η άδεια για τις ειδοποιήσεις δεν δόθηκε.");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="page-content">
-        <div className="empty-state">Φόρτωση ρυθμίσεων...</div>
-      </div>
-    );
   }
+
+  /* -------------------------------------------------------
+     DAYS BEFORE
+  ------------------------------------------------------- */
+
+  async function handleDaysBeforeChange(event) {
+    const value = Number(event.target.value);
+
+    setDaysBefore(value);
+
+    if (!notificationsEnabled) {
+      return;
+    }
+
+    try {
+      await saveNotificationSettings(session, true, value);
+
+      setMessage("Η ρύθμιση των ειδοποιήσεων ενημερώθηκε.");
+
+      setError("");
+    } catch (err) {
+      console.error(err);
+
+      setError("Δεν ήταν δυνατή η αποθήκευση της ρύθμισης.");
+    }
+  }
+
+  /* -------------------------------------------------------
+     RENDER
+  ------------------------------------------------------- */
 
   return (
     <div className="page-content">
       <div className="page-header">
-        <div>
-          <h1>Ρυθμίσεις</h1>
+        <h1>Ρυθμίσεις</h1>
 
-          <p>Ρυθμίσεις εφαρμογής και ειδοποιήσεων.</p>
-        </div>
+        <p>Διαχείριση εφαρμογής και ειδοποιήσεων</p>
       </div>
 
+      {/* NOTIFICATIONS */}
+
       <div className="dashboard-panel settings-panel">
-        <h2>Ειδοποιήσεις οφειλών</h2>
+        <div className="dashboard-panel-header">
+          <h3>Ειδοποιήσεις</h3>
+
+          <p>Λάβε ειδοποίηση για τις επερχόμενες οφειλές σου.</p>
+        </div>
 
         <div className="setting-row">
           <div>
-            <strong>Ειδοποιήσεις</strong>
+            <strong>Ειδοποιήσεις οφειλών</strong>
 
-            <span>Ενεργοποίηση υπενθυμίσεων για επερχόμενες οφειλές.</span>
+            <span>Εμφάνιση push notification στη συσκευή σου.</span>
           </div>
 
           <label className="switch">
             <input
               type="checkbox"
-              checked={settings.enabled}
-              onChange={(event) =>
-                setSettings((prev) => ({
-                  ...prev,
-                  enabled: event.target.checked,
-                }))
-              }
+              checked={notificationsEnabled}
+              onChange={handleNotificationToggle}
+              disabled={loading || saving}
             />
 
             <span className="slider"></span>
@@ -4920,72 +4961,91 @@ function SettingsPage({ session }) {
 
         <div className="setting-row">
           <div>
-            <strong>Υπενθύμιση πριν</strong>
+            <strong>Ειδοποίηση πριν την οφειλή</strong>
 
-            <span>Πόσες ημέρες πριν από την ημερομηνία λήξης.</span>
+            <span>Πόσες ημέρες πριν την ημερομηνία πληρωμής.</span>
           </div>
 
           <select
             className="setting-select"
-            value={settings.days_before}
-            onChange={(event) =>
-              setSettings((prev) => ({
-                ...prev,
-                days_before: Number(event.target.value),
-              }))
-            }
+            value={daysBefore}
+            onChange={handleDaysBeforeChange}
+            disabled={!notificationsEnabled || loading || saving}
           >
-            <option value="1">1 ημέρα</option>
-            <option value="2">2 ημέρες</option>
-            <option value="3">3 ημέρες</option>
-            <option value="5">5 ημέρες</option>
-            <option value="7">7 ημέρες</option>
-            <option value="14">14 ημέρες</option>
+            <option value={1}>1 ημέρα</option>
+
+            <option value={2}>2 ημέρες</option>
+
+            <option value={3}>3 ημέρες</option>
+
+            <option value={5}>5 ημέρες</option>
+
+            <option value={7}>7 ημέρες</option>
           </select>
         </div>
 
-        <div className="settings-actions">
-          <button
-            type="button"
-            className="secondary-button"
-            onClick={requestNotifications}
+        {message && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "10px 12px",
+              borderRadius: "6px",
+              background: "#eaf7ef",
+              color: "#08752f",
+              fontSize: "10px",
+            }}
           >
-            Άδεια ειδοποιήσεων
-          </button>
+            {message}
+          </div>
+        )}
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={saveSettings}
-            disabled={saving}
+        {error && (
+          <div
+            style={{
+              marginTop: "15px",
+              padding: "10px 12px",
+              borderRadius: "6px",
+              background: "#fff0f0",
+              color: "#c62828",
+              fontSize: "10px",
+            }}
           >
-            {saving ? "Αποθήκευση..." : "Αποθήκευση"}
-          </button>
-        </div>
+            {error}
+          </div>
+        )}
       </div>
 
-      <div className="dashboard-panel">
-        <h2>Λογαριασμός</h2>
+      {/* ACCOUNT */}
+
+      <div className="dashboard-panel settings-panel">
+        <div className="dashboard-panel-header">
+          <h3>Λογαριασμός</h3>
+
+          <p>Τα στοιχεία του λογαριασμού σου.</p>
+        </div>
 
         <div className="account-info">
           <div>
             <span>Email</span>
-            <strong>{session.user.email}</strong>
+
+            <strong>{session?.user?.email || "-"}</strong>
           </div>
         </div>
       </div>
 
+      {/* APP INFO */}
+
       <div className="dashboard-panel">
-        <h2>Πληροφορίες εφαρμογής</h2>
+        <div className="dashboard-panel-header">
+          <h3>MY DEBTS</h3>
+
+          <p>Personal Finance & Debt Manager</p>
+        </div>
 
         <div className="app-info">
           <div>
-            <span>Εφαρμογή</span>
-            <strong>MY DEBTS</strong>
-          </div>
-
-          <div>
             <span>Έκδοση</span>
+
             <strong>1.0.0</strong>
           </div>
         </div>
@@ -4993,7 +5053,6 @@ function SettingsPage({ session }) {
     </div>
   );
 }
-
 /* =========================================================
    EXPORT
 ========================================================= */
