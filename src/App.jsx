@@ -7,91 +7,134 @@ import "./App.css";
 ========================================================= */
 
 const PROVIDER_CATEGORIES = {
-  "Ενέργεια": [
+  Ενέργεια: [
     "ΔΕΗ",
     "Protergia",
     "ΗΡΩΝ",
-    "Elpedison",
+    "Enerwave",
     "NRG",
     "ZeniΘ",
     "Volton",
-    "Enerwave",
-    "Φυσικό Αέριο",
+    "Φυσικό Αέριο Ελληνική Εταιρεία Ενέργειας",
+    "ΕΛΙΝ",
+    "ΕΛΤΑ Ενέργεια",
+    "Eunice",
+    "Solar Energy",
+    "ΔΕΠΑ",
+    "Watt+Volt",
+    "EFA Energy",
     "Άλλος πάροχος ενέργειας",
   ],
 
-  "Ύδρευση": [
+  Ύδρευση: [
     "ΕΥΔΑΠ",
     "ΕΥΑΘ",
+    "ΔΕΥΑ",
     "Δημοτική Επιχείρηση Ύδρευσης",
     "Άλλος πάροχος ύδρευσης",
   ],
 
-  // Κρατάμε την τιμή "Τηλεφωνία" ώστε να είναι συμβατή
-  // με τις υπάρχουσες εγγραφές στη βάση.
-  "Τηλεφωνία": [
+  Τηλεφωνία: [
     "COSMOTE",
     "Vodafone",
     "Nova",
     "ΔΕΗ Fiber",
     "Inalan",
     "HCN",
+    "United Fiber",
+    "SkyTelecom",
+    "Orizon",
+    "Cosmote Business",
+    "Vodafone Business",
+    "Nova Business",
     "Άλλος πάροχος τηλεφωνίας / Internet",
   ],
 
-  "Σπίτι": [
+  Σπίτι: [
     "Κοινόχρηστα",
     "Ενοίκιο",
     "Πετρέλαιο θέρμανσης",
+    "Φυσικό αέριο",
+    "Υγραέριο",
+    "Ξύλα",
+    "Pellet",
     "Θέρμανση",
     "Ασφάλεια κατοικίας",
+    "Ενοίκιο αποθήκης",
+    "Ενοίκιο parking",
+    "Διαχειριστής πολυκατοικίας",
     "Άλλο έξοδο κατοικίας",
   ],
 
-  // Κρατάμε την τιμή "Τράπεζες" ώστε να είναι συμβατή
-  // με τις υπάρχουσες εγγραφές στη βάση.
-  "Τράπεζες": [
+  Τράπεζες: [
     "Alpha Bank",
     "Eurobank",
     "Εθνική Τράπεζα",
     "Τράπεζα Πειραιώς",
-    "Attica Bank",
-    "Optima bank",
-    "tbi bank",
-    "Klarna",
-    "Πιστωτική κάρτα",
-    "Καταναλωτικό δάνειο",
-    "Προσωπικό δάνειο",
-    "Στεγαστικό δάνειο",
-    "Άλλη τραπεζική οφειλή",
+    "Optima Bank",
+    "CrediaBank",
+    "Viva.com",
+    "ProCredit Bank",
+    "Παγκρήτια Τράπεζα",
+    "Συνεταιριστική Τράπεζα Θεσσαλίας",
+    "Συνεταιριστική Τράπεζα Ηπείρου",
+    "Συνεταιριστική Τράπεζα Καρδίτσας",
+    "BNP Paribas",
+    "Citibank",
+    "HSBC",
+    "Άλλη τράπεζα",
   ],
 
-  "Μετακινήσεις": [
+  Μετακινήσεις: [
     "Ασφάλεια αυτοκινήτου",
+    "Ασφάλεια μηχανής",
     "Τέλη κυκλοφορίας",
     "ΚΤΕΟ",
     "Διόδια",
+    "e-PASS",
+    "Fast Pass",
+    "Olympia Pass",
+    "Αυτοκινητόδρομος Αιγαίου",
     "Parking",
     "Κάρτα ΜΜΜ",
+    "ΟΑΣΑ",
+    "ΟΣΕΘ",
+    "Hellenic Train",
+    "Αττική Οδός",
     "Άλλο έξοδο μετακίνησης",
   ],
 
-  "Ασφάλειες": [
-    "Ασφάλεια αυτοκινήτου",
-    "Ασφάλεια κατοικίας",
-    "Ασφάλεια υγείας",
-    "Ασφάλεια ζωής",
-    "Άλλη ασφάλεια",
+  Ασφάλειες: [
+    "Εθνική Ασφαλιστική",
+    "Interamerican",
+    "Generali",
+    "Allianz",
+    "Eurolife FFH",
+    "NN Hellas",
+    "ERGO",
+    "Groupama",
+    "AXA",
+    "Hellas Direct",
+    "Anytime",
+    "Minetta",
+    "Interasco",
+    "Ευρωπαϊκή Πίστη",
+    "Συνεταιριστική Ασφαλιστική",
+    "Άλλη ασφαλιστική",
   ],
 
-  "Δημόσιο": [
-    "Εφορία / ΑΑΔΕ",
+  Δημόσιο: [
+    "ΑΑΔΕ / Εφορία",
     "ΕΝΦΙΑ",
-    "Ρύθμιση οφειλών",
+    "Φόρος εισοδήματος",
+    "ΦΠΑ",
+    "Ρύθμιση οφειλών ΑΑΔΕ",
     "ΕΦΚΑ",
+    "Ρύθμιση ΕΦΚΑ",
     "Δήμος",
     "Δημοτικά τέλη",
-    "Πρόστιμο",
+    "Κλήση / Πρόστιμο",
+    "Τροχαία",
     "Άλλη οφειλή Δημοσίου",
   ],
 
@@ -99,11 +142,26 @@ const PROVIDER_CATEGORIES = {
     "Netflix",
     "Spotify",
     "Apple",
+    "iCloud",
     "Google",
+    "Google One",
     "Amazon",
+    "Amazon Prime",
     "Microsoft",
+    "Microsoft 365",
     "ChatGPT",
+    "Disney+",
+    "Max",
+    "YouTube Premium",
+    "YouTube Music",
+    "Dropbox",
+    "OneDrive",
+    "Adobe",
+    "PlayStation Plus",
+    "Xbox Game Pass",
+    "Nintendo Switch Online",
     "Γυμναστήριο",
+    "Συνδρομή εφημερίδας",
     "Άλλη συνδρομή",
   ],
 
@@ -113,33 +171,81 @@ const PROVIDER_CATEGORIES = {
     "PayPal",
     "Δόση αγοράς",
     "Δόση ηλεκτρικής συσκευής",
+    "Δόση κινητού",
+    "Δόση υπολογιστή",
+    "Δόση τηλεόρασης",
     "Δόση επίπλων",
+    "Δόση αυτοκινήτου",
     "Άλλη δόση",
   ],
 
-  "Άλλο": ["Άλλη οφειλή"],
+  "Πιστωτικές / Χρηματοδοτήσεις": [
+    "Πιστωτική κάρτα Alpha Bank",
+    "Πιστωτική κάρτα Eurobank",
+    "Πιστωτική κάρτα Εθνικής",
+    "Πιστωτική κάρτα Πειραιώς",
+    "Πιστωτική κάρτα Optima",
+    "Προσωπικό δάνειο",
+    "Καταναλωτικό δάνειο",
+    "Στεγαστικό δάνειο",
+    "Αυτοκινητοδάνειο",
+    "tbi bank",
+    "Klarna",
+    "Leasing",
+    "Άλλη χρηματοδότηση",
+  ],
+
+  Υγεία: [
+    "Ιδιώτης γιατρός",
+    "Οδοντίατρος",
+    "Διαγνωστικό κέντρο",
+    "Ιδιωτική κλινική",
+    "Φαρμακείο",
+    "ΕΟΠΥΥ",
+    "Ιδιωτική ασφάλεια υγείας",
+    "Άλλη ιατρική οφειλή",
+  ],
+
+  Εκπαίδευση: [
+    "Πανεπιστήμιο",
+    "Ιδιωτικό ΙΕΚ",
+    "Κολλέγιο",
+    "Φροντιστήριο",
+    "Ξένη γλώσσα",
+    "Online course",
+    "Άλλη εκπαιδευτική οφειλή",
+  ],
+
+  Άλλο: [
+    "Προσωπική οφειλή",
+    "Οφειλή σε ιδιώτη",
+    "Οφειλή σε επιχείρηση",
+    "Δάνειο από φίλο / συγγενή",
+    "Άλλη οφειλή",
+  ],
 };
 
 const PROVIDER_CATEGORY_ICONS = {
-  "Ενέργεια": "⚡",
-  "Ύδρευση": "💧",
-  "Τηλεφωνία": "📱",
-  "Σπίτι": "🏠",
-  "Τράπεζες": "🏦",
-  "Μετακινήσεις": "🚗",
-  "Ασφάλειες": "🛡️",
-  "Δημόσιο": "🏛️",
+  Ενέργεια: "⚡",
+  Ύδρευση: "💧",
+  Τηλεφωνία: "📱",
+  Σπίτι: "🏠",
+  Τράπεζες: "🏦",
+  Μετακινήσεις: "🚗",
+  Ασφάλειες: "🛡️",
+  Δημόσιο: "🏛️",
   "Συνδρομές & Υπηρεσίες": "🛒",
   "Αγορές / Δόσεις": "📦",
-  "Άλλο": "📌",
+  "Πιστωτικές / Χρηματοδοτήσεις": "💳",
+  Υγεία: "⚕️",
+  Εκπαίδευση: "🎓",
+  Άλλο: "📌",
 };
 
 const PROVIDER_CATEGORY_OPTIONS = Object.keys(PROVIDER_CATEGORIES);
 
 function formatProviderCategory(category) {
-  return `${PROVIDER_CATEGORY_ICONS[category] || "📌"} ${
-    category || "Άλλο"
-  }`;
+  return `${PROVIDER_CATEGORY_ICONS[category] || "📌"} ${category || "Άλλο"}`;
 }
 
 const INCOME_CATEGORIES = [
@@ -343,10 +449,13 @@ function useProviders(session) {
     if (defaultsToInsert.length > 0) {
       const { error: insertError } = await supabase
         .from("providers")
-        .insert(defaultsToInsert);
+        .upsert(defaultsToInsert, {
+          onConflict: "user_id,name,category",
+          ignoreDuplicates: true,
+        });
 
       if (insertError) {
-        console.error("Default providers insert error:", insertError);
+        console.error("Default providers upsert error:", insertError);
       }
     }
 
@@ -1484,9 +1593,7 @@ function NewDebtPage({ session, onBack, onSaved }) {
                 required
               >
                 <option value="">
-                  {loadingProviders
-                    ? "Φόρτωση..."
-                    : "Επίλεξε κατηγορία"}
+                  {loadingProviders ? "Φόρτωση..." : "Επίλεξε κατηγορία"}
                 </option>
 
                 {PROVIDER_CATEGORY_OPTIONS.map((category) => (
@@ -1630,10 +1737,7 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
   // Αν ο υπάρχων πάροχος δεν υπάρχει πλέον στους ενεργούς παρόχους,
   // τον κρατάμε προσωρινά ώστε να μπορεί να αποθηκευτεί η οφειλή.
-  if (
-    provider &&
-    !providerOptions.some((item) => item.name === provider)
-  ) {
+  if (provider && !providerOptions.some((item) => item.name === provider)) {
     providerOptions.unshift({
       id: "existing-provider",
       name: provider,
@@ -1652,8 +1756,7 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
     const providerName = event.target.value;
 
     const selected = providers.find(
-      (item) =>
-        item.name === providerName && item.category === category,
+      (item) => item.name === providerName && item.category === category,
     );
 
     setProvider(providerName);
@@ -4572,9 +4675,7 @@ function ProvidersPage({ session }) {
                 <div>
                   <strong>{provider.name}</strong>
 
-                  <span>
-                    {formatProviderCategory(provider.category)}
-                  </span>
+                  <span>{formatProviderCategory(provider.category)}</span>
                 </div>
 
                 <button
