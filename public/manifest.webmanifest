@@ -1,0 +1,30 @@
+{
+  "name": "MY DEBTS - Personal Finance",
+  "short_name": "MY DEBTS",
+  "description": "Personal Finance & Debt Management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f9fd",
+  "theme_color": "#2563eb",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/icon-180x180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
