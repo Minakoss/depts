@@ -3934,3 +3934,27 @@ select {
   visibility: visible;
   transform: translateY(0);
 }
+.register-link-button {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #2778bb;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.register-link-button:hover {
+  text-decoration: underline;
+}
+
+.login-success {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #e8f7ee;
+  color: #08752f;
+  font-size: 13px;
+  line-height: 1.4;
+}

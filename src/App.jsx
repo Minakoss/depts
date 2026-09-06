@@ -534,12 +534,24 @@ function useProviders(session) {
 function App() {
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
 
       setSession(data.session);
+
+      /*
+       * Το Supabase προσθέτει type=recovery στο URL
+       * όταν ο χρήστης ανοίξει το link επαναφοράς κωδικού.
+       */
+      const hash = window.location.hash;
+
+      if (hash.includes("type=recovery")) {
+        setRecoveryMode(true);
+      }
+
       setCheckingSession(false);
     };
 
@@ -547,8 +559,23 @@ function App() {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
+    } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+
+      /*
+       * Το Supabase ενημερώνει την εφαρμογή ότι
+       * ο χρήστης βρίσκεται σε διαδικασία PASSWORD RECOVERY.
+       */
+      if (event === "PASSWORD_RECOVERY") {
+        setRecoveryMode(true);
+      }
+
+      /*
+       * Μετά το logout βγαίνουμε από το recovery mode.
+       */
+      if (event === "SIGNED_OUT") {
+        setRecoveryMode(false);
+      }
     });
 
     return () => {
@@ -560,11 +587,170 @@ function App() {
     return null;
   }
 
+  /*
+   * Ο χρήστης ήρθε από το email επαναφοράς.
+   * Εμφανίζουμε την οθόνη αλλαγής κωδικού.
+   */
+  if (recoveryMode && session) {
+    return (
+      <ResetPasswordPage
+        onCompleted={async () => {
+          await supabase.auth.signOut();
+          setRecoveryMode(false);
+        }}
+      />
+    );
+  }
+
   if (!session) {
     return <LoginPage />;
   }
 
   return <Dashboard session={session} />;
+}
+/* =========================================================
+   RESET PASSWORD
+========================================================= */
+
+function ResetPasswordPage({ onCompleted }) {
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
+  const handleUpdatePassword = async (event) => {
+    event.preventDefault();
+
+    setError("");
+    setMessage("");
+
+    if (password.length < 6) {
+      setError("Ο κωδικός πρέπει να περιέχει τουλάχιστον 6 χαρακτήρες.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Οι κωδικοί πρόσβασης δεν ταιριάζουν.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.updateUser({
+      password,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      console.error(error);
+
+      setError(
+        "Δεν ήταν δυνατή η αλλαγή του κωδικού πρόσβασης. Παρακαλώ δοκιμάστε ξανά.",
+      );
+
+      return;
+    }
+
+    setMessage("Ο κωδικός πρόσβασης άλλαξε με επιτυχία.");
+
+    /*
+     * Μικρή καθυστέρηση ώστε ο χρήστης να δει
+     * το μήνυμα επιτυχίας πριν επιστρέψει στη σύνδεση.
+     */
+    setTimeout(() => {
+      onCompleted();
+    }, 1200);
+  };
+
+  return (
+    <div className="login-page">
+      <section className="login-visual">
+        <div className="visual-overlay"></div>
+
+        <div className="visual-content">
+          <div className="welcome-text">
+            <div>Καλωσήρθατε στο</div>
+
+            <h1>MY DEBTS</h1>
+
+            <p>
+              Την εφαρμογή που απλοποιεί τη διαχείριση
+              <br />
+              των μηνιαίων υποχρεώσεων
+            </p>
+          </div>
+        </div>
+
+        <div className="version">V 1.0.0</div>
+      </section>
+
+      <section className="login-panel">
+        <div className="language-switch">
+          <button type="button" className="language-active">
+            EL
+          </button>
+
+          <span>|</span>
+
+          <button type="button">EN</button>
+        </div>
+
+        <div className="login-content">
+          <div className="brand">
+            <div className="brand-icon">€</div>
+
+            <div className="brand-name">
+              <strong>MY</strong>
+              <span>DEBTS</span>
+            </div>
+          </div>
+
+          <p className="login-description">
+            Ορίστε τον νέο σας κωδικό πρόσβασης
+          </p>
+
+          <form onSubmit={handleUpdatePassword} className="login-form">
+            <div className="login-field">
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Νέος κωδικός πρόσβασης"
+                minLength={6}
+                required
+              />
+            </div>
+
+            <div className="login-field">
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                placeholder="Επιβεβαίωση νέου κωδικού"
+                minLength={6}
+                required
+              />
+            </div>
+
+            {error && <div className="login-error">{error}</div>}
+
+            {message && <div className="login-success">{message}</div>}
+
+            <button type="submit" className="login-button" disabled={loading}>
+              {loading ? "Αλλαγή..." : "Αλλαγή κωδικού"}
+            </button>
+          </form>
+        </div>
+
+        <div className="login-footer">
+          Προσωπική διαχείριση μηνιαίων υποχρεώσεων
+        </div>
+      </section>
+    </div>
+  );
 }
 
 /* =========================================================
@@ -574,18 +760,32 @@ function App() {
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+
   const [language, setLanguage] = useState("EL");
+
+  const [mode, setMode] = useState("login");
+  // login
+  // register
+  // forgot
+
+  const resetMessages = () => {
+    setError("");
+    setMessage("");
+  };
 
   const handleLogin = async (event) => {
     event.preventDefault();
 
-    setError("");
+    resetMessages();
     setLoading(true);
 
     const { error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
@@ -594,6 +794,100 @@ function LoginPage() {
     }
 
     setLoading(false);
+  };
+
+  const handleRegister = async (event) => {
+    event.preventDefault();
+
+    resetMessages();
+
+    if (password.length < 6) {
+      setError("Ο κωδικός πρέπει να περιέχει τουλάχιστον 6 χαρακτήρες.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Οι κωδικοί πρόσβασης δεν ταιριάζουν.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password,
+    });
+
+    if (error) {
+      console.error(error);
+
+      if (error.message?.toLowerCase().includes("already registered")) {
+        setError("Υπάρχει ήδη λογαριασμός με αυτό το email.");
+      } else {
+        setError("Δεν ήταν δυνατή η δημιουργία του λογαριασμού.");
+      }
+
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
+
+    if (data?.user && !data.session) {
+      setMessage(
+        "Ο λογαριασμός δημιουργήθηκε. Ελέγξτε το email σας για επιβεβαίωση.",
+      );
+    } else {
+      setMessage("Ο λογαριασμός δημιουργήθηκε με επιτυχία.");
+    }
+  };
+
+  const handleForgotPassword = async (event) => {
+    event.preventDefault();
+
+    resetMessages();
+
+    if (!email.trim()) {
+      setError("Συμπληρώστε πρώτα το email σας.");
+      return;
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/`,
+    });
+
+    setLoading(false);
+
+    if (error) {
+      console.error(error);
+      setError("Δεν ήταν δυνατή η αποστολή του email επαναφοράς.");
+      return;
+    }
+
+    setMessage("Σας στείλαμε email για την επαναφορά του κωδικού πρόσβασης.");
+  };
+
+  const showLogin = () => {
+    resetMessages();
+    setPassword("");
+    setConfirmPassword("");
+    setMode("login");
+  };
+
+  const showRegister = () => {
+    resetMessages();
+    setPassword("");
+    setConfirmPassword("");
+    setMode("register");
+  };
+
+  const showForgotPassword = () => {
+    resetMessages();
+    setPassword("");
+    setConfirmPassword("");
+    setMode("forgot");
   };
 
   return (
@@ -649,45 +943,165 @@ function LoginPage() {
             </div>
           </div>
 
-          <p className="login-description">
-            Συμπληρώστε τα στοιχεία σας για να συνδεθείτε
-          </p>
+          {mode === "login" && (
+            <>
+              <p className="login-description">
+                Συμπληρώστε τα στοιχεία σας για να συνδεθείτε
+              </p>
 
-          <form onSubmit={handleLogin} className="login-form">
-            <div className="login-field">
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Όνομα χρήστη"
-                required
-              />
-            </div>
+              <form onSubmit={handleLogin} className="login-form">
+                <div className="login-field">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="Όνομα χρήστη"
+                    required
+                  />
+                </div>
 
-            <div className="login-field">
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Κωδικός πρόσβασης"
-                required
-              />
-            </div>
+                <div className="login-field">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Κωδικός πρόσβασης"
+                    required
+                  />
+                </div>
 
-            <div className="forgot-password">
-              <button type="button">Ξέχασα τον κωδικό μου</button>
-            </div>
+                <div className="forgot-password">
+                  <button type="button" onClick={showForgotPassword}>
+                    Ξέχασα τον κωδικό μου
+                  </button>
+                </div>
 
-            {error && <div className="login-error">{error}</div>}
+                {error && <div className="login-error">{error}</div>}
 
-            <button type="submit" className="login-button" disabled={loading}>
-              {loading ? "Σύνδεση..." : "Είσοδος"}
-            </button>
+                {message && <div className="login-success">{message}</div>}
 
-            <button type="button" className="offline-button">
-              Είσοδος Offline
-            </button>
-          </form>
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={loading}
+                >
+                  {loading ? "Σύνδεση..." : "Είσοδος"}
+                </button>
+
+                <button
+                  type="button"
+                  className="register-link-button"
+                  onClick={showRegister}
+                >
+                  Δεν έχω λογαριασμό
+                </button>
+              </form>
+            </>
+          )}
+
+          {mode === "register" && (
+            <>
+              <p className="login-description">
+                Δημιουργήστε τον προσωπικό σας λογαριασμό
+              </p>
+
+              <form onSubmit={handleRegister} className="login-form">
+                <div className="login-field">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="Email"
+                    required
+                  />
+                </div>
+
+                <div className="login-field">
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Κωδικός πρόσβασης"
+                    minLength={6}
+                    required
+                  />
+                </div>
+
+                <div className="login-field">
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                    placeholder="Επιβεβαίωση κωδικού"
+                    minLength={6}
+                    required
+                  />
+                </div>
+
+                {error && <div className="login-error">{error}</div>}
+
+                {message && <div className="login-success">{message}</div>}
+
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={loading}
+                >
+                  {loading ? "Δημιουργία..." : "Δημιουργία λογαριασμού"}
+                </button>
+
+                <button
+                  type="button"
+                  className="register-link-button"
+                  onClick={showLogin}
+                >
+                  ← Επιστροφή στη σύνδεση
+                </button>
+              </form>
+            </>
+          )}
+
+          {mode === "forgot" && (
+            <>
+              <p className="login-description">
+                Συμπληρώστε το email σας για να λάβετε
+                <br />
+                οδηγίες επαναφοράς κωδικού.
+              </p>
+
+              <form onSubmit={handleForgotPassword} className="login-form">
+                <div className="login-field">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="Email"
+                    required
+                  />
+                </div>
+
+                {error && <div className="login-error">{error}</div>}
+
+                {message && <div className="login-success">{message}</div>}
+
+                <button
+                  type="submit"
+                  className="login-button"
+                  disabled={loading}
+                >
+                  {loading ? "Αποστολή..." : "Αποστολή email"}
+                </button>
+
+                <button
+                  type="button"
+                  className="register-link-button"
+                  onClick={showLogin}
+                >
+                  ← Επιστροφή στη σύνδεση
+                </button>
+              </form>
+            </>
+          )}
         </div>
 
         <div className="login-footer">
