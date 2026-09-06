@@ -3764,3 +3764,173 @@ select {
     padding-bottom: 72px !important;
   }
 }
+.logout-button {
+  position: relative;
+}
+
+.logout-button::after {
+  content: "Αποσύνδεση";
+  position: absolute;
+
+  /* Εμφάνιση ΠΑΝΩ από το κουμπί */
+  bottom: calc(100% + 8px);
+  right: 0;
+
+  background: #1f2937;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  padding: 8px 10px;
+  border-radius: 7px;
+
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+
+  z-index: 9999;
+}
+
+.logout-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.edit-debt-button {
+  position: relative;
+}
+
+.edit-debt-button::after {
+  content: "Επεξεργασία";
+  position: absolute;
+
+  /* Πάνω από το κουμπί */
+  bottom: calc(100% + 8px);
+  right: 0;
+
+  background: #1f2937;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  padding: 8px 10px;
+  border-radius: 7px;
+
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+
+  z-index: 9999;
+}
+
+.edit-debt-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.delete-debt-button {
+  position: relative;
+}
+
+.delete-debt-button::after {
+  content: "Διαγραφή";
+  position: absolute;
+
+  bottom: calc(100% + 8px);
+  right: 0;
+
+  background: #1f2937;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  padding: 8px 10px;
+  border-radius: 7px;
+
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+
+  z-index: 9999;
+}
+
+.delete-debt-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.debt-status-button {
+  position: relative;
+}
+
+.debt-status-button::after {
+  content: "Κατάσταση οφειλής";
+  position: absolute;
+
+  bottom: calc(100% + 8px);
+  right: 0;
+
+  background: #1f2937;
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+
+  padding: 8px 10px;
+  border-radius: 7px;
+
+  white-space: nowrap;
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(4px);
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease,
+    visibility 0.15s ease;
+
+  z-index: 9999;
+}
+
+.debt-status-button:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}

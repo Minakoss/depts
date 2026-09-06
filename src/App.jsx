@@ -319,7 +319,39 @@ function getDateForMonth(date) {
 
   return `${year}-${month}-01`;
 }
+function getMonthDifference(fromDateString, targetMonth) {
+  if (!fromDateString) {
+    return null;
+  }
 
+  const fromDate = new Date(`${fromDateString}T00:00:00`);
+
+  return (
+    (targetMonth.getFullYear() - fromDate.getFullYear()) * 12 +
+    (targetMonth.getMonth() - fromDate.getMonth())
+  );
+}
+
+function getDateInSelectedMonth(year, monthIndex, day) {
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+
+  const safeDay = Math.min(Number(day) || 1, lastDay);
+
+  return `${year}-${String(monthIndex + 1).padStart(2, "0")}-${String(
+    safeDay,
+  ).padStart(2, "0")}`;
+}
+
+function addMonthsToDateString(dateString, months) {
+  const date = new Date(`${dateString}T00:00:00`);
+
+  date.setMonth(date.getMonth() + months);
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(date.getDate()).padStart(2, "0")}`;
+}
 function isDebtExpired(debt) {
   if (!debt || debt.paid || !debt.due_date) {
     return false;
@@ -713,7 +745,6 @@ function Dashboard({ session }) {
             <span>PERSONAL FINANCE</span>
           </div>
         </div>
-
         <div className="mobile-header-actions">
           <button
             type="button"
@@ -722,7 +753,7 @@ function Dashboard({ session }) {
             title="Αποσύνδεση"
             aria-label="Αποσύνδεση"
           >
-            ←
+            ↪
           </button>
         </div>
       </header>
@@ -903,7 +934,7 @@ function Dashboard({ session }) {
             aria-label="Αποσύνδεση"
             type="button"
           >
-            ←
+            ↪
           </button>
         </div>
       </aside>
@@ -1037,6 +1068,10 @@ function MobileNavigation({ activePage, onNavigate }) {
    DASHBOARD HOME
 ========================================================= */
 
+/* =========================================================
+   DASHBOARD HOME
+========================================================= */
+
 function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonth());
 
@@ -1053,27 +1088,39 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
   const loadDashboard = async () => {
     setLoading(true);
 
-    const startDate = `${selectedMonth.getFullYear()}-${String(
-      selectedMonth.getMonth() + 1,
-    ).padStart(2, "0")}-01`;
+    const year = selectedMonth.getFullYear();
+    const month = selectedMonth.getMonth();
 
-    const nextMonth = new Date(
-      selectedMonth.getFullYear(),
-      selectedMonth.getMonth() + 1,
-      1,
-    );
+    const startDate = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+
+    const nextMonth = new Date(year, month + 1, 1);
 
     const endDate = `${nextMonth.getFullYear()}-${String(
       nextMonth.getMonth() + 1,
     ).padStart(2, "0")}-01`;
 
-    const [debtsResult, incomeResult, expensesResult] = await Promise.all([
+    const [
+      debtsResult,
+      incomeResult,
+      expensesResult,
+      recurringResult,
+      installmentsResult,
+      loansResult,
+    ] = await Promise.all([
+      /* =====================================================
+         ΚΑΝΟΝΙΚΕΣ ΟΦΕΙΛΕΣ
+      ===================================================== */
+
       supabase
         .from("debts")
         .select("*")
         .eq("user_id", session.user.id)
         .gte("due_date", startDate)
         .lt("due_date", endDate),
+
+      /* =====================================================
+         ΕΣΟΔΑ
+      ===================================================== */
 
       supabase
         .from("income")
@@ -1082,24 +1129,243 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         .gte("income_date", startDate)
         .lt("income_date", endDate),
 
+      /* =====================================================
+         ΕΞΟΔΑ
+      ===================================================== */
+
       supabase
         .from("expenses")
         .select("*")
         .eq("user_id", session.user.id)
         .gte("expense_date", startDate)
         .lt("expense_date", endDate),
+
+      /* =====================================================
+         ΠΑΓΙΕΣ ΟΦΕΙΛΕΣ
+      ===================================================== */
+
+      supabase
+        .from("recurring_debts")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("active", true),
+
+      /* =====================================================
+         ΔΟΣΕΙΣ
+      ===================================================== */
+
+      supabase
+        .from("installments")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("active", true),
+
+      /* =====================================================
+         ΔΑΝΕΙΑ
+      ===================================================== */
+
+      supabase
+        .from("loans")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("active", true),
     ]);
 
-    if (debtsResult.error) console.error(debtsResult.error);
-    if (incomeResult.error) console.error(incomeResult.error);
-    if (expensesResult.error) console.error(expensesResult.error);
+    /* =======================================================
+       ERRORS
+    ======================================================= */
 
-    setDebts(sortDebts(debtsResult.data || []));
+    if (debtsResult.error) {
+      console.error("Dashboard debts:", debtsResult.error);
+    }
+
+    if (incomeResult.error) {
+      console.error("Dashboard income:", incomeResult.error);
+    }
+
+    if (expensesResult.error) {
+      console.error("Dashboard expenses:", expensesResult.error);
+    }
+
+    if (recurringResult.error) {
+      console.error("Dashboard recurring debts:", recurringResult.error);
+    }
+
+    if (installmentsResult.error) {
+      console.error("Dashboard installments:", installmentsResult.error);
+    }
+
+    if (loansResult.error) {
+      console.error("Dashboard loans:", loansResult.error);
+    }
+
+    /* =======================================================
+       ΚΑΝΟΝΙΚΕΣ ΟΦΕΙΛΕΣ
+    ======================================================= */
+
+    const normalDebts = (debtsResult.data || []).map((item) => ({
+      ...item,
+      sourceType: "debt",
+    }));
+
+    /* =======================================================
+       ΠΑΓΙΕΣ ΟΦΕΙΛΕΣ
+       Κάθε ενεργή πάγια οφειλή εμφανίζεται κάθε μήνα.
+    ======================================================= */
+
+    const recurringDebts = (recurringResult.data || []).map((item) => ({
+      id: `recurring-${item.id}`,
+      user_id: item.user_id,
+      provider: item.provider,
+      description: `${item.description || item.provider} · Πάγια οφειλή`,
+      amount: Number(item.amount || 0),
+      due_date: getDateInSelectedMonth(year, month, item.day_of_month),
+      paid: false,
+      sourceType: "recurring",
+      sourceId: item.id,
+    }));
+
+    /* =======================================================
+       ΔΟΣΕΙΣ
+       Υπολογίζουμε ποια δόση αντιστοιχεί στον επιλεγμένο μήνα.
+
+       Παράδειγμα:
+       next_due_date = 15/09/2026
+       selectedMonth = Οκτώβριος 2026
+       => εμφανίζεται η επόμενη δόση τον Οκτώβριο.
+
+       Επίσης λειτουργεί για μελλοντικούς μήνες.
+    ======================================================= */
+
+    const installmentDebts = [];
+
+    (installmentsResult.data || []).forEach((item) => {
+      if (!item.next_due_date) {
+        return;
+      }
+
+      const remainingInstallments =
+        Number(item.total_installments || 0) -
+        Number(item.paid_installments || 0);
+
+      if (remainingInstallments <= 0) {
+        return;
+      }
+
+      const monthDifference = getMonthDifference(
+        item.next_due_date,
+        selectedMonth,
+      );
+
+      if (
+        monthDifference === null ||
+        monthDifference < 0 ||
+        monthDifference >= remainingInstallments
+      ) {
+        return;
+      }
+
+      const dueDate = addMonthsToDateString(
+        item.next_due_date,
+        monthDifference,
+      );
+
+      installmentDebts.push({
+        id: `installment-${item.id}-${monthDifference}`,
+        user_id: item.user_id,
+        provider: item.provider,
+        description: `${item.description || "Δόση"} · Δόση ${
+          Number(item.paid_installments || 0) + monthDifference + 1
+        }/${item.total_installments}`,
+        amount: Number(item.installment_amount || 0),
+        due_date: dueDate,
+        paid: false,
+        sourceType: "installment",
+        sourceId: item.id,
+      });
+    });
+
+    /* =======================================================
+       ΔΑΝΕΙΑ
+       Υπολογίζουμε τη μηνιαία δόση για τον επιλεγμένο μήνα.
+    ======================================================= */
+
+    const loanDebts = [];
+
+    (loansResult.data || []).forEach((item) => {
+      if (
+        !item.next_due_date ||
+        Number(item.remaining_amount || 0) <= 0 ||
+        Number(item.monthly_payment || 0) <= 0
+      ) {
+        return;
+      }
+
+      const monthDifference = getMonthDifference(
+        item.next_due_date,
+        selectedMonth,
+      );
+
+      if (monthDifference === null || monthDifference < 0) {
+        return;
+      }
+
+      const remainingAmount = Number(item.remaining_amount || 0);
+      const monthlyPayment = Number(item.monthly_payment || 0);
+
+      const futurePayments = Math.ceil(remainingAmount / monthlyPayment);
+
+      if (monthDifference >= futurePayments) {
+        return;
+      }
+
+      const remainingAtThisMonth =
+        remainingAmount - monthDifference * monthlyPayment;
+
+      const paymentAmount = Math.min(
+        monthlyPayment,
+        Math.max(0, remainingAtThisMonth),
+      );
+
+      const dueDate = addMonthsToDateString(
+        item.next_due_date,
+        monthDifference,
+      );
+
+      loanDebts.push({
+        id: `loan-${item.id}-${monthDifference}`,
+        user_id: item.user_id,
+        provider: item.provider,
+        description: `${item.description || "Δάνειο"} · Μηνιαία δόση`,
+        amount: paymentAmount,
+        due_date: dueDate,
+        paid: false,
+        sourceType: "loan",
+        sourceId: item.id,
+      });
+    });
+
+    /* =======================================================
+       ΕΝΟΠΟΙΗΣΗ ΟΛΩΝ ΤΩΝ ΥΠΟΧΡΕΩΣΕΩΝ
+    ======================================================= */
+
+    const combinedDebts = [
+      ...normalDebts,
+      ...recurringDebts,
+      ...installmentDebts,
+      ...loanDebts,
+    ];
+
+    setDebts(sortDebts(combinedDebts));
     setIncome(incomeResult.data || []);
     setExpenses(expensesResult.data || []);
 
     setLoading(false);
   };
+
+  /* =======================================================
+     ΣΥΝΟΛΑ
+  ======================================================= */
 
   const totalDebts = useMemo(
     () => debts.reduce((sum, item) => sum + Number(item.amount || 0), 0),
@@ -1133,6 +1399,10 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
   );
 
   const balance = totalIncome - totalExpenses - pendingDebts;
+
+  /* =======================================================
+     MONTH
+  ======================================================= */
 
   const changeMonth = (amount) => {
     setSelectedMonth(
@@ -1181,6 +1451,10 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         </div>
       </div>
 
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
+
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΕΣΟΔΑ</span>
@@ -1215,6 +1489,10 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         </div>
       </div>
 
+      {/* =====================================================
+          ALL DEBTS / OBLIGATIONS
+      ===================================================== */}
+
       <div className="debts-section">
         <div className="section-header">
           <div>
@@ -1225,7 +1503,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
               </span>
             </h2>
 
-            <p>{debts.length} καταχωρήσεις</p>
+            <p>{debts.length} υποχρεώσεις</p>
           </div>
 
           <button className="new-debt-button" onClick={onNewDebt}>
@@ -1238,15 +1516,23 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
             <div className="empty-state">Φόρτωση...</div>
           ) : debts.length === 0 ? (
             <div className="empty-state">
-              Δεν υπάρχουν καταχωρημένες οφειλές για τον επιλεγμένο μήνα.
+              Δεν υπάρχουν οφειλές ή άλλες υποχρεώσεις για τον επιλεγμένο μήνα.
             </div>
           ) : (
-            debts.map((debt) => (
-              <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
-            ))
+            debts.map((debt) =>
+              debt.sourceType === "debt" ? (
+                <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
+              ) : (
+                <DashboardLinkedDebtRow key={debt.id} debt={debt} />
+              ),
+            )
           )}
         </div>
       </div>
+
+      {/* =====================================================
+          DASHBOARD PANELS
+      ===================================================== */}
 
       <div className="dashboard-panels">
         <UpcomingDebts debts={debts} />
@@ -1289,60 +1575,137 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 /* =========================================================
    UPCOMING DEBTS
 ========================================================= */
+/* =========================================================
+   UPCOMING DEBTS
+========================================================= */
 
 function UpcomingDebts({ debts }) {
-  const upcoming = [...debts]
-    .filter((debt) => !debt.paid && debt.due_date)
-    .sort(
-      (a, b) =>
-        new Date(`${a.due_date}T00:00:00`) - new Date(`${b.due_date}T00:00:00`),
-    )
-    .slice(0, 5);
+  const upcomingDebts = [...debts]
+    .filter((debt) => {
+      if (!debt.due_date) return false;
+
+      const dueDate = new Date(`${debt.due_date}T00:00:00`);
+      const today = new Date();
+
+      today.setHours(0, 0, 0, 0);
+
+      const diffTime = dueDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      return diffDays >= 0 && diffDays <= 30 && !debt.paid;
+    })
+    .sort((a, b) => {
+      return new Date(a.due_date) - new Date(b.due_date);
+    });
+
+  if (upcomingDebts.length === 0) {
+    return (
+      <div className="upcoming-section">
+        <div className="section-header">
+          <h3>ΕΠΟΜΕΝΕΣ ΟΦΕΙΛΕΣ</h3>
+        </div>
+
+        <div className="empty-state">Δεν υπάρχουν επόμενες οφειλές.</div>
+      </div>
+    );
+  }
 
   return (
-    <div className="dashboard-panel">
-      <div className="dashboard-panel-header">
-        <div>
-          <h3>Προσεχείς υποχρεώσεις</h3>
-          <p>Οι επόμενες πληρωμές σας</p>
-        </div>
+    <div className="upcoming-section">
+      <div className="section-header">
+        <h3>ΕΠΟΜΕΝΕΣ ΟΦΕΙΛΕΣ</h3>
       </div>
 
-      {upcoming.length === 0 ? (
-        <div className="empty-state">Δεν υπάρχουν εκκρεμείς υποχρεώσεις.</div>
-      ) : (
-        <div className="upcoming-list">
-          {upcoming.map((debt) => {
-            const due = new Date(`${debt.due_date}T00:00:00`);
-            const today = getTodayDate();
+      <div className="upcoming-list">
+        {upcomingDebts.map((debt) => {
+          let sourceLabel = "";
 
-            const diff = Math.ceil(
-              (due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
-            );
+          if (debt.sourceType === "recurring") {
+            sourceLabel = "Πάγια οφειλή";
+          } else if (debt.sourceType === "installment") {
+            sourceLabel = "Δόση";
+          } else if (debt.sourceType === "loan") {
+            sourceLabel = "Δάνειο";
+          }
 
-            return (
-              <div className="upcoming-item" key={debt.id}>
-                <div>
-                  <strong>{debt.provider}</strong>
-                  <span>{formatDate(debt.due_date)}</span>
+          return (
+            <div
+              className="upcoming-item"
+              key={`${debt.sourceType || "debt"}-${debt.id}`}
+            >
+              <div className="upcoming-left">
+                <div className="upcoming-icon">
+                  {debt.provider?.charAt(0)?.toUpperCase() || "€"}
                 </div>
 
-                <div className="upcoming-right">
-                  <strong>{formatCurrency(debt.amount)}</strong>
+                <div className="upcoming-info">
+                  <strong>{debt.provider}</strong>
 
-                  <span>
-                    {diff < 0
-                      ? `Ληγμένη ${Math.abs(diff)} ημέρες`
-                      : diff === 0
-                        ? "Λήγει σήμερα"
-                        : `Σε ${diff} ημέρες`}
-                  </span>
+                  <span>{debt.description || sourceLabel || "Οφειλή"}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <div className="upcoming-right">
+                <span className="upcoming-date">
+                  {formatDate(debt.due_date)}
+                </span>
+
+                <strong className="upcoming-amount">
+                  {formatCurrency(debt.amount)}
+                </strong>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+/* =========================================================
+   DASHBOARD LINKED DEBT
+   Εμφάνιση πάγιων οφειλών / δόσεων / δανείων
+========================================================= */
+
+function DashboardLinkedDebtRow({ debt }) {
+  let sourceLabel = "Υποχρέωση";
+
+  if (debt.sourceType === "recurring") {
+    sourceLabel = "Πάγια οφειλή";
+  }
+
+  if (debt.sourceType === "installment") {
+    sourceLabel = "Δόση";
+  }
+
+  if (debt.sourceType === "loan") {
+    sourceLabel = "Δάνειο";
+  }
+
+  const formattedDate = debt.due_date ? formatDate(debt.due_date) : "-";
+
+  return (
+    <div className="debt-row debt-row-pending">
+      <div className="debt-icon">
+        {debt.provider?.charAt(0)?.toUpperCase() || "€"}
+      </div>
+
+      <div className="debt-info">
+        <strong>{debt.provider}</strong>
+
+        <span>{debt.description || sourceLabel}</span>
+      </div>
+
+      <div className="debt-due">
+        <span>ΛΗΞΗ</span>
+
+        <strong>{formattedDate}</strong>
+      </div>
+
+      <div className="debt-amount">
+        <strong>{formatCurrency(debt.amount)}</strong>
+      </div>
+
+      <span className="debt-status-button pending">{sourceLabel}</span>
     </div>
   );
 }
@@ -1454,7 +1817,7 @@ function DebtRow({ debt, onEdit }) {
         title="Επεξεργασία οφειλής"
         aria-label="Επεξεργασία οφειλής"
       >
-        →
+        ✎
       </button>
 
       <button
