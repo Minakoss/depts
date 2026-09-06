@@ -3614,3 +3614,153 @@ select {
 
   visibility: hidden !important;
 }
+/* =========================================================
+   MOBILE BOTTOM NAV - LARGE TOUCH / HORIZONTAL SCROLL
+   Τελική ρύθμιση mobile navigation
+========================================================= */
+
+@media screen and (max-width: 700px) {
+  .sidebar {
+    height: 82px !important;
+
+    display: flex !important;
+    flex-direction: row !important;
+
+    overflow: hidden !important;
+  }
+
+  .sidebar-nav {
+    width: max-content !important;
+    min-width: 100% !important;
+
+    height: 82px !important;
+
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+
+    padding: 4px 8px !important;
+
+    gap: 2px !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-x: contain !important;
+
+    scrollbar-width: none !important;
+
+    touch-action: pan-x !important;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-item {
+    flex: 0 0 76px !important;
+
+    width: 76px !important;
+    min-width: 76px !important;
+
+    height: 72px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 5px !important;
+
+    padding: 7px 4px !important;
+
+    margin: 0 !important;
+
+    border-radius: 8px !important;
+
+    font-size: 10px !important;
+
+    white-space: nowrap !important;
+
+    touch-action: manipulation !important;
+
+    flex-shrink: 0 !important;
+  }
+
+  .nav-icon {
+    width: auto !important;
+
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+
+    font-size: 22px !important;
+
+    line-height: 1 !important;
+  }
+
+  .main-area {
+    padding-bottom: 82px !important;
+  }
+
+  .app {
+    padding-bottom: 82px !important;
+  }
+}
+
+/* =========================================================
+   MOBILE LANDSCAPE
+   Ίδια μεγαλύτερη μπάρα αλλά λίγο χαμηλότερη
+========================================================= */
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .sidebar {
+    height: 72px !important;
+  }
+
+  .sidebar-nav {
+    height: 72px !important;
+
+    padding: 3px 8px !important;
+
+    justify-content: flex-start !important;
+
+    gap: 2px !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    -webkit-overflow-scrolling: touch !important;
+
+    touch-action: pan-x !important;
+  }
+
+  .nav-item {
+    flex: 0 0 76px !important;
+
+    width: 76px !important;
+    min-width: 76px !important;
+
+    height: 66px !important;
+
+    gap: 4px !important;
+
+    padding: 6px 4px !important;
+
+    font-size: 10px !important;
+  }
+
+  .nav-icon {
+    font-size: 21px !important;
+  }
+
+  .main-area {
+    padding-bottom: 72px !important;
+  }
+
+  .app {
+    padding-bottom: 72px !important;
+  }
+}
