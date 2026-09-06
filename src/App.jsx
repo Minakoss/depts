@@ -1279,6 +1279,14 @@ function Dashboard({ session }) {
           </SidebarButton>
 
           <SidebarButton
+            active={activePage === "cards"}
+            onClick={() => setActivePage("cards")}
+            icon="▣"
+          >
+            Κάρτες τροφοδοσίας
+          </SidebarButton>
+
+          <SidebarButton
             active={activePage === "budget"}
             onClick={() => setActivePage("budget")}
             icon="◉"
@@ -1383,6 +1391,7 @@ function Dashboard({ session }) {
         )}
 
         {activePage === "loans" && <LoansPage session={session} />}
+        {activePage === "cards" && <BenefitCardsPage session={session} />}
 
         {activePage === "budget" && <BudgetPage session={session} />}
 
@@ -1477,10 +1486,6 @@ function MobileNavigation({ activePage, onNavigate }) {
     </>
   );
 }
-
-/* =========================================================
-   DASHBOARD HOME
-========================================================= */
 
 /* =========================================================
    DASHBOARD HOME
@@ -1624,7 +1629,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
     /* =======================================================
        ΠΑΓΙΕΣ ΟΦΕΙΛΕΣ
-       Κάθε ενεργή πάγια οφειλή εμφανίζεται κάθε μήνα.
     ======================================================= */
 
     const recurringDebts = (recurringResult.data || []).map((item) => ({
@@ -1641,14 +1645,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
     /* =======================================================
        ΔΟΣΕΙΣ
-       Υπολογίζουμε ποια δόση αντιστοιχεί στον επιλεγμένο μήνα.
-
-       Παράδειγμα:
-       next_due_date = 15/09/2026
-       selectedMonth = Οκτώβριος 2026
-       => εμφανίζεται η επόμενη δόση τον Οκτώβριο.
-
-       Επίσης λειτουργεί για μελλοντικούς μήνες.
     ======================================================= */
 
     const installmentDebts = [];
@@ -1701,7 +1697,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
     /* =======================================================
        ΔΑΝΕΙΑ
-       Υπολογίζουμε τη μηνιαία δόση για τον επιλεγμένο μήνα.
     ======================================================= */
 
     const loanDebts = [];
@@ -1725,6 +1720,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       }
 
       const remainingAmount = Number(item.remaining_amount || 0);
+
       const monthlyPayment = Number(item.monthly_payment || 0);
 
       const futurePayments = Math.ceil(remainingAmount / monthlyPayment);
@@ -1778,7 +1774,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
   };
 
   /* =======================================================
-     ΣΥΝΟΛΑ
+     ΣΥΝΟΛΑ ΟΦΕΙΛΩΝ
   ======================================================= */
 
   const totalDebts = useMemo(
@@ -1802,17 +1798,60 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     [debts],
   );
 
+  /* =======================================================
+     ΕΣΟΔΑ
+  ======================================================= */
+
   const totalIncome = useMemo(
     () => income.reduce((sum, item) => sum + Number(item.amount || 0), 0),
     [income],
   );
+
+  /* =======================================================
+     ΕΞΟΔΑ
+     
+     totalExpenses = ΟΛΑ τα έξοδα του μήνα
+     
+     bankExpenses = μόνο Τράπεζα / Μετρητά
+     
+     cardExpenses = μόνο κάρτες τροφοδοσίας
+  ======================================================= */
 
   const totalExpenses = useMemo(
     () => expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0),
     [expenses],
   );
 
-  const balance = totalIncome - totalExpenses - pendingDebts;
+  const bankExpenses = useMemo(
+    () =>
+      expenses
+        .filter(
+          (item) => !item.payment_method || item.payment_method === "bank",
+        )
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [expenses],
+  );
+
+  const cardExpenses = useMemo(
+    () =>
+      expenses
+        .filter((item) => item.payment_method === "card")
+        .reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    [expenses],
+  );
+
+  /* =======================================================
+     ΥΠΟΛΟΙΠΟ
+     
+     Το υπόλοιπο της τράπεζας ΔΕΝ επηρεάζεται από αγορές
+     που έγιναν με κάρτα τροφοδοσίας.
+     
+     Έσοδα
+     - Τράπεζα / Μετρητά
+     - ΟΛΕΣ οι υποχρεώσεις
+    ======================================================= */
+
+  const balance = totalIncome - bankExpenses - totalDebts;
 
   /* =======================================================
      MONTH
@@ -1830,6 +1869,10 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
 
   return (
     <>
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
       <div className="welcome">
         <div className="welcome-header">
           <div>
@@ -1872,33 +1915,43 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΕΣΟΔΑ</span>
+
           <strong>{formatCurrency(totalIncome)}</strong>
         </div>
 
         <div className="summary-card">
           <span>ΕΞΟΔΑ</span>
+
           <strong>{formatCurrency(totalExpenses)}</strong>
         </div>
 
         <div className="summary-card">
           <span>ΟΦΕΙΛΕΣ</span>
+
           <strong>{formatCurrency(totalDebts)}</strong>
         </div>
 
         <div className="summary-card">
           <span>ΥΠΟΛΟΙΠΟ</span>
+
           <strong>{formatCurrency(balance)}</strong>
         </div>
       </div>
 
+      {/* =====================================================
+          PAID / PENDING
+      ===================================================== */}
+
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΠΛΗΡΩΜΕΝΑ</span>
+
           <strong>{formatCurrency(paidDebts)}</strong>
         </div>
 
         <div className="summary-card">
           <span>ΕΚΚΡΕΜΗ</span>
+
           <strong>{formatCurrency(pendingDebts)}</strong>
         </div>
       </div>
@@ -1955,6 +2008,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
           <div className="dashboard-panel-header">
             <div>
               <h3>Οικονομική εικόνα</h3>
+
               <p>{formatMonthYear(selectedMonth)}</p>
             </div>
           </div>
@@ -1962,22 +2016,84 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
           <div className="finance-overview">
             <div>
               <span>Έσοδα</span>
+
               <strong>{formatCurrency(totalIncome)}</strong>
             </div>
 
             <div>
               <span>Έξοδα</span>
+
               <strong>{formatCurrency(totalExpenses)}</strong>
             </div>
 
             <div>
               <span>Υποχρεώσεις</span>
+
               <strong>{formatCurrency(totalDebts)}</strong>
             </div>
 
             <div>
               <span>Υπόλοιπο</span>
+
               <strong>{formatCurrency(balance)}</strong>
+            </div>
+          </div>
+
+          {/* =================================================
+              ΠΛΗΡΟΦΟΡΙΕΣ ΚΑΡΤΩΝ
+          ================================================= */}
+
+          <div
+            style={{
+              marginTop: "18px",
+              paddingTop: "16px",
+              borderTop: "1px solid #e5e7eb",
+              display: "flex",
+              justifyContent: "space-between",
+              gap: "20px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  color: "#64748b",
+                  marginBottom: "4px",
+                }}
+              >
+                ΕΞΟΔΑ ΚΑΡΤΩΝ ΤΡΟΦΟΔΟΣΙΑΣ
+              </span>
+
+              <strong
+                style={{
+                  fontSize: "18px",
+                }}
+              >
+                {formatCurrency(cardExpenses)}
+              </strong>
+            </div>
+
+            <div>
+              <span
+                style={{
+                  display: "block",
+                  fontSize: "11px",
+                  color: "#64748b",
+                  marginBottom: "4px",
+                }}
+              >
+                ΤΡΑΠΕΖΑ / ΜΕΤΡΗΤΑ
+              </span>
+
+              <strong
+                style={{
+                  fontSize: "18px",
+                }}
+              >
+                {formatCurrency(bankExpenses)}
+              </strong>
             </div>
           </div>
         </div>
@@ -1986,9 +2102,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
   );
 }
 
-/* =========================================================
-   UPCOMING DEBTS
-========================================================= */
 /* =========================================================
    UPCOMING DEBTS
 ========================================================= */
@@ -3033,18 +3146,30 @@ function IncomePage({ session }) {
 
 function ExpensesPage({ session }) {
   const [items, setItems] = useState([]);
+  const [cards, setCards] = useState([]);
+
   const [loading, setLoading] = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(true);
 
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
   const [amount, setAmount] = useState("");
   const [expenseDate, setExpenseDate] = useState(getTodayDateString());
   const [recurring, setRecurring] = useState(false);
+
+  const [paymentMethod, setPaymentMethod] = useState("bank");
+  const [paymentCardId, setPaymentCardId] = useState("");
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     loadExpenses();
+    loadCards();
   }, [session.user.id]);
+
+  /* =======================================================
+     ΕΞΟΔΑ
+  ======================================================= */
 
   const loadExpenses = async () => {
     setLoading(true);
@@ -3058,13 +3183,55 @@ function ExpensesPage({ session }) {
       });
 
     if (error) {
-      console.error(error);
+      console.error("Expenses:", error);
     } else {
       setItems(data || []);
     }
 
     setLoading(false);
   };
+
+  /* =======================================================
+     ΚΑΡΤΕΣ ΤΡΟΦΟΔΟΣΙΑΣ
+  ======================================================= */
+
+  const loadCards = async () => {
+    setCardsLoading(true);
+
+    const { data, error } = await supabase
+      .from("benefit_cards")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .eq("active", true)
+      .order("name", {
+        ascending: true,
+      });
+
+    if (error) {
+      console.error("Benefit cards:", error);
+      setCards([]);
+    } else {
+      setCards(data || []);
+    }
+
+    setCardsLoading(false);
+  };
+
+  /* =======================================================
+     ΑΛΛΑΓΗ ΤΡΟΠΟΥ ΠΛΗΡΩΜΗΣ
+  ======================================================= */
+
+  const handlePaymentMethodChange = (value) => {
+    setPaymentMethod(value);
+
+    if (value !== "card") {
+      setPaymentCardId("");
+    }
+  };
+
+  /* =======================================================
+     ΑΠΟΘΗΚΕΥΣΗ
+  ======================================================= */
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -3081,32 +3248,56 @@ function ExpensesPage({ session }) {
       return;
     }
 
+    /* -------------------------------------------------------
+       Αν επιλέχθηκε κάρτα, πρέπει να έχει επιλεγεί συγκεκριμένη
+       κάρτα τροφοδοσίας.
+    ------------------------------------------------------- */
+
+    if (paymentMethod === "card" && !paymentCardId) {
+      alert("Επιλέξτε την κάρτα τροφοδοσίας.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase.from("expenses").insert({
       user_id: session.user.id,
-      description,
+      description: description.trim(),
       category: category || null,
       amount: numericAmount,
       expense_date: expenseDate,
       recurring,
+
+      payment_method: paymentMethod,
+      payment_card_id: paymentMethod === "card" ? Number(paymentCardId) : null,
     });
 
     setSaving(false);
 
     if (error) {
-      console.error(error);
+      console.error("Save expense:", error);
       alert(`Δεν ήταν δυνατή η αποθήκευση. ${error.message}`);
       return;
     }
 
+    /* -------------------------------------------------------
+       Reset φόρμας
+    ------------------------------------------------------- */
+
     setDescription("");
     setCategory("");
     setAmount("");
+    setExpenseDate(getTodayDateString());
     setRecurring(false);
+    setPaymentMethod("bank");
+    setPaymentCardId("");
 
     await loadExpenses();
   };
+
+  /* =======================================================
+     ΔΙΑΓΡΑΦΗ
+  ======================================================= */
 
   const handleDelete = async (id) => {
     const deleted = await deleteRecord(
@@ -3121,29 +3312,86 @@ function ExpensesPage({ session }) {
     }
   };
 
+  /* =======================================================
+     ΣΥΝΟΛΑ
+  ======================================================= */
+
   const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  const bankTotal = items
+    .filter((item) => !item.payment_method || item.payment_method === "bank")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  const cardTotal = items
+    .filter((item) => item.payment_method === "card")
+    .reduce((sum, item) => sum + Number(item.amount || 0), 0);
+
+  /* =======================================================
+     ΒΟΗΘΗΤΙΚΟ ΓΙΑ ΤΗΝ ΕΜΦΑΝΙΣΗ ΤΗΣ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const getCardName = (cardId) => {
+    if (!cardId) {
+      return "";
+    }
+
+    const card = cards.find((item) => String(item.id) === String(cardId));
+
+    return card?.name || "Κάρτα τροφοδοσίας";
+  };
 
   return (
     <>
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
       <div className="welcome">
         <h2>Έξοδα</h2>
+
         <p>Καταχωρήστε και παρακολουθήστε τα έξοδά σας.</p>
       </div>
+
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
 
       <div className="summary-grid">
         <div className="summary-card">
           <span>ΣΥΝΟΛΟ ΕΞΟΔΩΝ</span>
+
           <strong>{formatCurrency(total)}</strong>
         </div>
 
         <div className="summary-card">
+          <span>ΤΡΑΠΕΖΑ / ΜΕΤΡΗΤΑ</span>
+
+          <strong>{formatCurrency(bankTotal)}</strong>
+        </div>
+
+        <div className="summary-card">
+          <span>ΚΑΡΤΕΣ</span>
+
+          <strong>{formatCurrency(cardTotal)}</strong>
+        </div>
+
+        <div className="summary-card">
           <span>ΚΑΤΑΧΩΡΗΣΕΙΣ</span>
+
           <strong>{items.length}</strong>
         </div>
       </div>
 
+      {/* =====================================================
+          FORM
+      ===================================================== */}
+
       <div className="form-container">
         <form onSubmit={handleSubmit}>
+          {/* -------------------------------------------------
+             ΠΕΡΙΓΡΑΦΗ
+          ------------------------------------------------- */}
+
           <div className="form-field">
             <label>Περιγραφή</label>
 
@@ -3155,6 +3403,10 @@ function ExpensesPage({ session }) {
               required
             />
           </div>
+
+          {/* -------------------------------------------------
+             ΚΑΤΗΓΟΡΙΑ / ΠΟΣΟ
+          ------------------------------------------------- */}
 
           <div className="form-row">
             <div className="form-field">
@@ -3188,6 +3440,10 @@ function ExpensesPage({ session }) {
             </div>
           </div>
 
+          {/* -------------------------------------------------
+             ΗΜΕΡΟΜΗΝΙΑ / ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΟ
+          ------------------------------------------------- */}
+
           <div className="form-row">
             <div className="form-field">
               <label>Ημερομηνία</label>
@@ -3213,6 +3469,61 @@ function ExpensesPage({ session }) {
             </div>
           </div>
 
+          {/* -------------------------------------------------
+             ΤΡΟΠΟΣ ΠΛΗΡΩΜΗΣ
+          ------------------------------------------------- */}
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Τρόπος πληρωμής</label>
+
+              <select
+                value={paymentMethod}
+                onChange={(event) =>
+                  handlePaymentMethodChange(event.target.value)
+                }
+              >
+                <option value="bank">Τράπεζα / Μετρητά</option>
+
+                <option value="card">Κάρτα τροφοδοσίας</option>
+              </select>
+            </div>
+
+            {/* -------------------------------------------------
+               ΕΠΙΛΟΓΗ ΚΑΡΤΑΣ
+            ------------------------------------------------- */}
+
+            {paymentMethod === "card" && (
+              <div className="form-field">
+                <label>Κάρτα</label>
+
+                <select
+                  value={paymentCardId}
+                  onChange={(event) => setPaymentCardId(event.target.value)}
+                  disabled={cardsLoading}
+                >
+                  <option value="">
+                    {cardsLoading
+                      ? "Φόρτωση καρτών..."
+                      : cards.length === 0
+                        ? "Δεν υπάρχουν κάρτες"
+                        : "Επιλέξτε κάρτα"}
+                  </option>
+
+                  {cards.map((card) => (
+                    <option key={card.id} value={card.id}>
+                      {card.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* -------------------------------------------------
+             ACTIONS
+          ------------------------------------------------- */}
+
           <div className="form-actions">
             <span></span>
 
@@ -3223,10 +3534,15 @@ function ExpensesPage({ session }) {
         </form>
       </div>
 
+      {/* =====================================================
+          LIST
+      ===================================================== */}
+
       <div className="debts-section">
         <div className="section-header">
           <div>
             <h2>Καταχωρημένα έξοδα</h2>
+
             <p>{items.length} καταχωρήσεις</p>
           </div>
         </div>
@@ -3245,6 +3561,9 @@ function ExpensesPage({ session }) {
                   <span>
                     {item.category || "Έξοδο"} · {formatDate(item.expense_date)}
                     {item.recurring ? " · Επαναλαμβανόμενο" : ""}
+                    {item.payment_method === "card"
+                      ? ` · ${getCardName(item.payment_card_id)}`
+                      : " · Τράπεζα / Μετρητά"}
                   </span>
                 </div>
 
@@ -3261,6 +3580,635 @@ function ExpensesPage({ session }) {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+function BenefitCardsPage({ session }) {
+  const [cards, setCards] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  const [name, setName] = useState("");
+  const [initialAmount, setInitialAmount] = useState("");
+  const [startDate, setStartDate] = useState(getTodayDateString());
+  const [reloadAmount, setReloadAmount] = useState("");
+  const [reloadFrequency, setReloadFrequency] = useState("monthly");
+  const [reloadDay, setReloadDay] = useState("1");
+
+  useEffect(() => {
+    loadCards();
+  }, [session.user.id]);
+
+  /* =======================================================
+     ΦΟΡΤΩΣΗ ΚΑΡΤΩΝ + ΕΞΟΔΩΝ
+  ======================================================= */
+
+  const loadCards = async () => {
+    setLoading(true);
+
+    const [cardsResult, expensesResult] = await Promise.all([
+      supabase
+        .from("benefit_cards")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .order("name", {
+          ascending: true,
+        }),
+
+      supabase
+        .from("expenses")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("payment_method", "card")
+        .order("expense_date", {
+          ascending: true,
+        }),
+    ]);
+
+    if (cardsResult.error) {
+      console.error("Benefit cards:", cardsResult.error);
+    }
+
+    if (expensesResult.error) {
+      console.error("Card expenses:", expensesResult.error);
+    }
+
+    setCards(cardsResult.data || []);
+    setExpenses(expensesResult.data || []);
+
+    setLoading(false);
+  };
+
+  /* =======================================================
+     ΠΡΟΣΘΗΚΗ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!name.trim()) {
+      alert("Συμπληρώστε το όνομα της κάρτας.");
+      return;
+    }
+
+    if (!initialAmount) {
+      alert("Συμπληρώστε το αρχικό ποσό.");
+      return;
+    }
+
+    if (!startDate) {
+      alert("Συμπληρώστε την ημερομηνία έναρξης.");
+      return;
+    }
+
+    if (!reloadAmount) {
+      alert("Συμπληρώστε το ποσό ανανέωσης.");
+      return;
+    }
+
+    const numericInitialAmount = normalizeAmount(initialAmount);
+    const numericReloadAmount = normalizeAmount(reloadAmount);
+    const numericReloadDay = Number(reloadDay);
+
+    if (!Number.isFinite(numericInitialAmount) || numericInitialAmount < 0) {
+      alert("Το αρχικό ποσό δεν είναι έγκυρο.");
+      return;
+    }
+
+    if (!Number.isFinite(numericReloadAmount) || numericReloadAmount < 0) {
+      alert("Το ποσό ανανέωσης δεν είναι έγκυρο.");
+      return;
+    }
+
+    if (
+      !Number.isInteger(numericReloadDay) ||
+      numericReloadDay < 1 ||
+      numericReloadDay > 31
+    ) {
+      alert("Η ημέρα ανανέωσης πρέπει να είναι από 1 έως 31.");
+      return;
+    }
+
+    setSaving(true);
+
+    const { error } = await supabase.from("benefit_cards").insert({
+      user_id: session.user.id,
+      name: name.trim(),
+      initial_amount: numericInitialAmount,
+      start_date: startDate,
+      reload_amount: numericReloadAmount,
+      reload_frequency: reloadFrequency,
+      reload_day: numericReloadDay,
+      active: true,
+    });
+
+    setSaving(false);
+
+    if (error) {
+      console.error("Add benefit card:", error);
+
+      alert(`Δεν ήταν δυνατή η αποθήκευση. ${error.message}`);
+
+      return;
+    }
+
+    setName("");
+    setInitialAmount("");
+    setStartDate(getTodayDateString());
+    setReloadAmount("");
+    setReloadFrequency("monthly");
+    setReloadDay("1");
+
+    await loadCards();
+  };
+
+  /* =======================================================
+     ΔΙΑΓΡΑΦΗ
+  ======================================================= */
+
+  const handleDelete = async (id, cardName) => {
+    const confirmed = window.confirm(
+      `Θέλετε να διαγράψετε την κάρτα "${cardName}";`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { error } = await supabase
+      .from("benefit_cards")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      console.error("Delete benefit card:", error);
+
+      alert(`Δεν ήταν δυνατή η διαγραφή. ${error.message}`);
+
+      return;
+    }
+
+    await loadCards();
+  };
+
+  /* =======================================================
+     ΜΕΤΑΤΡΟΠΗ ΣΥΧΝΟΤΗΤΑΣ ΣΕ ΜΗΝΕΣ
+  ======================================================= */
+
+  const getFrequencyMonths = (frequency) => {
+    switch (frequency) {
+      case "monthly":
+        return 1;
+
+      case "bimonthly":
+        return 2;
+
+      case "quarterly":
+        return 3;
+
+      case "semiannual":
+        return 6;
+
+      case "yearly":
+        return 12;
+
+      default:
+        return 1;
+    }
+  };
+
+  /* =======================================================
+     SAFE ΗΜΕΡΟΜΗΝΙΑ
+     
+     Αν π.χ. η ημέρα είναι 31 και ο μήνας έχει 30 ημέρες,
+     χρησιμοποιούμε την τελευταία ημέρα του μήνα.
+  ======================================================= */
+
+  const createSafeDate = (year, monthIndex, day) => {
+    const lastDayOfMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+    return new Date(year, monthIndex, Math.min(day, lastDayOfMonth));
+  };
+
+  /* =======================================================
+     ΠΛΗΘΟΣ ΑΝΑΝΕΩΣΕΩΝ ΜΕΧΡΙ ΣΗΜΕΡΑ
+     
+     ΣΗΜΑΝΤΙΚΟ:
+     Το initial_amount είναι το αρχικό ποσό της κάρτας.
+     
+     Οι ανανεώσεις ξεκινούν ΜΕΤΑ την start_date.
+     
+     Άρα δεν προσθέτουμε αναδρομικά ανανεώσεις από Ιανουάριο.
+  ======================================================= */
+
+  const getReloadCountUntilDate = (card, targetDate) => {
+    if (!card || !card.start_date || !targetDate) {
+      return 0;
+    }
+
+    const start = new Date(`${card.start_date}T00:00:00`);
+    const target = new Date(targetDate);
+
+    if (Number.isNaN(start.getTime()) || Number.isNaN(target.getTime())) {
+      return 0;
+    }
+
+    /*
+     * Αν η ημερομηνία έναρξης είναι στο μέλλον,
+     * δεν υπάρχει ακόμη καμία ανανέωση.
+     */
+
+    if (target <= start) {
+      return 0;
+    }
+
+    const frequencyMonths = getFrequencyMonths(card.reload_frequency);
+
+    const reloadDay = Number(card.reload_day || 1);
+
+    /*
+     * Βρίσκουμε την πρώτη προγραμματισμένη ανανέωση
+     * μετά την ημερομηνία έναρξης.
+     */
+
+    let current = createSafeDate(
+      start.getFullYear(),
+      start.getMonth(),
+      reloadDay,
+    );
+
+    /*
+     * Η πρώτη ανανέωση πρέπει να είναι ΑΥΣΤΗΡΑ μετά
+     * την ημερομηνία έναρξης.
+     */
+
+    if (current <= start) {
+      current = createSafeDate(
+        start.getFullYear(),
+        start.getMonth() + frequencyMonths,
+        reloadDay,
+      );
+    }
+
+    let count = 0;
+
+    while (current <= target) {
+      count += 1;
+
+      current = createSafeDate(
+        current.getFullYear(),
+        current.getMonth() + frequencyMonths,
+        reloadDay,
+      );
+    }
+
+    return count;
+  };
+
+  /* =======================================================
+     ΠΛΗΘΟΣ ΑΝΑΝΕΩΣΕΩΝ ΜΕΧΡΙ ΣΗΜΕΡΑ
+  ======================================================= */
+
+  const getReloadCountUntilToday = (card) => {
+    const today = new Date();
+
+    return getReloadCountUntilDate(card, today);
+  };
+
+  /* =======================================================
+     ΕΞΟΔΑ ΣΥΓΚΕΚΡΙΜΕΝΗΣ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const getCardExpenses = (cardId) => {
+    return expenses.filter(
+      (item) => String(item.payment_card_id) === String(cardId),
+    );
+  };
+
+  /* =======================================================
+     ΣΥΝΟΛΙΚΑ ΕΞΟΔΑ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const getCardUsedAmount = (cardId) => {
+    return getCardExpenses(cardId).reduce(
+      (sum, item) => sum + Number(item.amount || 0),
+      0,
+    );
+  };
+
+  /* =======================================================
+     ΣΥΝΟΛΟ ΑΝΑΝΕΩΣΕΩΝ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const getCardReloadAmount = (card) => {
+    const reloadCount = getReloadCountUntilToday(card);
+
+    return Number(card.reload_amount || 0) * reloadCount;
+  };
+
+  /* =======================================================
+     ΔΙΑΘΕΣΙΜΟ ΥΠΟΛΟΙΠΟ ΚΑΡΤΑΣ
+  ======================================================= */
+
+  const getCardBalance = (card) => {
+    const initial = Number(card.initial_amount || 0);
+
+    const reloads = getCardReloadAmount(card);
+
+    const used = getCardUsedAmount(card.id);
+
+    return Math.max(0, initial + reloads - used);
+  };
+
+  /* =======================================================
+     ΣΥΧΝΟΤΗΤΑ ΓΙΑ ΕΜΦΑΝΙΣΗ
+  ======================================================= */
+
+  const getFrequencyLabel = (frequency) => {
+    switch (frequency) {
+      case "monthly":
+        return "Κάθε μήνα";
+
+      case "bimonthly":
+        return "Κάθε 2 μήνες";
+
+      case "quarterly":
+        return "Κάθε 3 μήνες";
+
+      case "semiannual":
+        return "Κάθε 6 μήνες";
+
+      case "yearly":
+        return "Κάθε χρόνο";
+
+      default:
+        return "Κάθε μήνα";
+    }
+  };
+
+  /* =======================================================
+     ΣΥΝΟΛΑ
+  ======================================================= */
+
+  const totalInitial = cards.reduce(
+    (sum, card) => sum + Number(card.initial_amount || 0),
+    0,
+  );
+
+  const totalReloads = cards.reduce(
+    (sum, card) => sum + getCardReloadAmount(card),
+    0,
+  );
+
+  const totalUsed = cards.reduce(
+    (sum, card) => sum + getCardUsedAmount(card.id),
+    0,
+  );
+
+  const totalBalance = cards.reduce(
+    (sum, card) => sum + getCardBalance(card),
+    0,
+  );
+
+  return (
+    <>
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
+
+      <div className="welcome">
+        <h2>Κάρτες τροφοδοσίας</h2>
+
+        <p>Διαχειριστείτε τις κάρτες παροχών και τα διαθέσιμα υπόλοιπά τους.</p>
+      </div>
+
+      {/* =====================================================
+          SUMMARY
+      ===================================================== */}
+
+      <div className="summary-grid">
+        <div className="summary-card">
+          <span>ΑΡΧΙΚΟ ΣΥΝΟΛΟ</span>
+
+          <strong>{formatCurrency(totalInitial)}</strong>
+        </div>
+
+        <div className="summary-card">
+          <span>ΑΝΑΝΕΩΣΕΙΣ</span>
+
+          <strong>{formatCurrency(totalReloads)}</strong>
+        </div>
+
+        <div className="summary-card">
+          <span>ΧΡΗΣΙΜΟΠΟΙΗΘΗΚΑΝ</span>
+
+          <strong>{formatCurrency(totalUsed)}</strong>
+        </div>
+
+        <div className="summary-card">
+          <span>ΔΙΑΘΕΣΙΜΟ ΥΠΟΛΟΙΠΟ</span>
+
+          <strong>{formatCurrency(totalBalance)}</strong>
+        </div>
+      </div>
+
+      {/* =====================================================
+          ΝΕΑ ΚΑΡΤΑ
+      ===================================================== */}
+
+      <div className="form-container">
+        <form onSubmit={handleSubmit}>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Όνομα κάρτας</label>
+              <select value={name} onChange={(e) => setName(e.target.value)}>
+                <option value="">Επιλέξτε κάρτα</option>
+                <option value="Up Hellas">Up Hellas</option>
+                <option value="Edenred">Edenred</option>
+                <option value="Άλλη">Άλλη κάρτα</option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Αρχικό ποσό (€)</label>
+
+              <input
+                type="text"
+                inputMode="decimal"
+                value={initialAmount}
+                onChange={(event) => setInitialAmount(event.target.value)}
+                placeholder="0,00"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Ημερομηνία έναρξης</label>
+
+              <input
+                type="date"
+                value={startDate}
+                onChange={(event) => setStartDate(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Ποσό ανανέωσης (€)</label>
+
+              <input
+                type="text"
+                inputMode="decimal"
+                value={reloadAmount}
+                onChange={(event) => setReloadAmount(event.target.value)}
+                placeholder="π.χ. 150,00"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Ανανέωση</label>
+
+              <select
+                value={reloadFrequency}
+                onChange={(event) => setReloadFrequency(event.target.value)}
+              >
+                <option value="monthly">Κάθε μήνα</option>
+
+                <option value="bimonthly">Κάθε 2 μήνες</option>
+
+                <option value="quarterly">Κάθε 3 μήνες</option>
+
+                <option value="semiannual">Κάθε 6 μήνες</option>
+
+                <option value="yearly">Κάθε χρόνο</option>
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label>Ημέρα ανανέωσης</label>
+
+              <select
+                value={reloadDay}
+                onChange={(event) => setReloadDay(event.target.value)}
+              >
+                {Array.from({ length: 31 }, (_, index) => index + 1).map(
+                  (day) => (
+                    <option key={day} value={day}>
+                      {day}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Κατάσταση</label>
+
+              <input type="text" value="Ενεργή" disabled />
+            </div>
+
+            <div className="form-field">
+              <label>&nbsp;</label>
+
+              <div className="form-actions">
+                <span></span>
+
+                <button type="submit" disabled={saving}>
+                  {saving ? "Αποθήκευση..." : "+ Προσθήκη κάρτας"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      {/* =====================================================
+          ΚΑΡΤΕΣ
+      ===================================================== */}
+
+      <div className="debts-section">
+        <div className="section-header">
+          <div>
+            <h2>Οι κάρτες μου</h2>
+
+            <p>{cards.length} κάρτες</p>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="empty-state">Φόρτωση...</div>
+        ) : cards.length === 0 ? (
+          <div className="empty-state">Δεν υπάρχουν καταχωρημένες κάρτες.</div>
+        ) : (
+          <div className="simple-record-list">
+            {cards.map((card) => {
+              const initial = Number(card.initial_amount || 0);
+
+              const reloads = getCardReloadAmount(card);
+
+              const used = getCardUsedAmount(card.id);
+
+              const balance = getCardBalance(card);
+
+              const reloadCount = getReloadCountUntilToday(card);
+
+              return (
+                <div className="simple-record" key={card.id}>
+                  <div>
+                    <strong>{card.name}</strong>
+
+                    <span>
+                      Αρχικό: {formatCurrency(initial)}
+                      {" · "}
+                      Έναρξη:{" "}
+                      {card.start_date ? formatDate(card.start_date) : "-"}
+                    </span>
+
+                    <span>
+                      Ανανέωση: {formatCurrency(card.reload_amount)}
+                      {" · "}
+                      {getFrequencyLabel(card.reload_frequency)}
+                      {" · Ημέρα "}
+                      {card.reload_day}
+                    </span>
+
+                    <span>
+                      Ανανεώσεις: {reloadCount}
+                      {" ("}
+                      {formatCurrency(reloads)}
+                      {")"}
+                      {" · "}
+                      Χρησιμοποιήθηκαν: {formatCurrency(used)}
+                    </span>
+                  </div>
+
+                  <strong>{formatCurrency(balance)}</strong>
+
+                  <button
+                    type="button"
+                    className="delete-debt-button"
+                    onClick={() => handleDelete(card.id, card.name)}
+                    title="Διαγραφή"
+                    aria-label="Διαγραφή"
+                  >
+                    🗑
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -5143,7 +6091,7 @@ function StatisticsPage({ session }) {
     .filter((item) => !item.paid)
     .reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-  const balance = totalIncome - totalExpenses - pendingDebts;
+  const balance = totalIncome - totalExpenses - totalDebts;
 
   const expensesByCategory = {};
 

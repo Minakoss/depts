@@ -3958,3 +3958,57 @@ select {
   font-size: 13px;
   line-height: 1.4;
 }
+/* =========================================================
+   BENEFIT CARDS
+========================================================= */
+
+.benefit-card-info {
+  min-width: 0;
+}
+
+.benefit-card-info strong {
+  display: block;
+}
+
+.benefit-card-info span {
+  display: block;
+  margin-top: 4px;
+}
+
+.benefit-card-balance {
+  white-space: nowrap;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+}
+
+.benefit-card-delete {
+  margin-left: 0 !important;
+}
+
+/* =========================================================
+   BENEFIT CARDS - MOBILE
+========================================================= */
+
+@media screen and (max-width: 700px) {
+  .benefit-card-info span {
+    line-height: 1.5;
+  }
+
+  .benefit-card-balance {
+    font-size: 14px !important;
+  }
+}
+
+/* =========================================================
+   BENEFIT CARDS - LANDSCAPE
+========================================================= */
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .benefit-card-info span {
+    line-height: 1.4;
+  }
+
+  .benefit-card-balance {
+    font-size: 14px !important;
+  }
+}
