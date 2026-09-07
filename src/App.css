@@ -3615,13 +3615,13 @@ select {
   visibility: hidden !important;
 }
 /* =========================================================
-   MOBILE BOTTOM NAV - LARGE TOUCH / HORIZONTAL SCROLL
-   Τελική ρύθμιση mobile navigation
+   MOBILE BOTTOM NAV
+   Μεγαλύτερη μπάρα + 2 γραμμές στα μεγάλα labels
 ========================================================= */
 
 @media screen and (max-width: 700px) {
   .sidebar {
-    height: 82px !important;
+    height: 94px !important;
 
     display: flex !important;
     flex-direction: row !important;
@@ -3633,13 +3633,13 @@ select {
     width: max-content !important;
     min-width: 100% !important;
 
-    height: 82px !important;
+    height: 94px !important;
 
     display: flex !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
 
-    padding: 4px 8px !important;
+    padding: 5px 8px !important;
 
     gap: 2px !important;
 
@@ -3659,12 +3659,12 @@ select {
   }
 
   .nav-item {
-    flex: 0 0 76px !important;
+    flex: 0 0 82px !important;
 
-    width: 76px !important;
-    min-width: 76px !important;
+    width: 82px !important;
+    min-width: 82px !important;
 
-    height: 72px !important;
+    height: 84px !important;
 
     display: flex !important;
     flex-direction: column !important;
@@ -3674,7 +3674,7 @@ select {
 
     gap: 5px !important;
 
-    padding: 7px 4px !important;
+    padding: 7px 3px !important;
 
     margin: 0 !important;
 
@@ -3682,7 +3682,16 @@ select {
 
     font-size: 10px !important;
 
-    white-space: nowrap !important;
+    /*
+     * Σημαντικό:
+     * Επιτρέπουμε στα μεγάλα labels να
+     * γίνουν δύο γραμμές.
+     */
+    white-space: normal !important;
+
+    text-align: center !important;
+
+    line-height: 1.15 !important;
 
     touch-action: manipulation !important;
 
@@ -3693,20 +3702,469 @@ select {
     width: auto !important;
 
     display: inline-flex !important;
+
     align-items: center !important;
     justify-content: center !important;
 
     font-size: 22px !important;
 
     line-height: 1 !important;
+
+    flex-shrink: 0 !important;
   }
 
+  /*
+   * Περισσότερος χώρος στο κάτω μέρος της εφαρμογής,
+   * ώστε η navigation bar να μην καλύπτει περιεχόμενο.
+   */
   .main-area {
-    padding-bottom: 82px !important;
+    padding-bottom: 94px !important;
   }
 
   .app {
+    padding-bottom: 94px !important;
+  }
+}
+
+/* =========================================================
+   VERY SMALL PHONES
+   Διατηρούμε το μεγαλύτερο navigation αλλά
+   επιτρέπουμε επίσης 2 γραμμές στα labels.
+========================================================= */
+
+@media screen and (max-width: 380px) {
+  .sidebar {
+    height: 94px !important;
+  }
+
+  .sidebar-nav {
+    height: 94px !important;
+
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+  }
+
+  .nav-item {
+    flex: 0 0 78px !important;
+
+    width: 78px !important;
+    min-width: 78px !important;
+
+    height: 84px !important;
+
+    padding-left: 3px !important;
+    padding-right: 3px !important;
+
+    font-size: 9px !important;
+
+    white-space: normal !important;
+
+    text-align: center !important;
+
+    line-height: 1.15 !important;
+  }
+
+  .nav-icon {
+    font-size: 21px !important;
+  }
+
+  .main-area {
+    padding-bottom: 94px !important;
+  }
+
+  .app {
+    padding-bottom: 94px !important;
+  }
+}
+
+/* =========================================================
+   MOBILE LANDSCAPE
+   Χωρίς header — μόνο το logout επάνω δεξιά.
+   Μεγαλύτερη bottom navigation.
+========================================================= */
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .app {
+    width: 100%;
+
+    min-height: 100dvh;
+
+    display: block;
+
     padding-bottom: 82px !important;
+
+    overflow-x: hidden;
+  }
+
+  /* =======================================================
+     MOBILE HEADER
+  ======================================================= */
+
+  .mobile-header {
+    position: fixed !important;
+
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+
+    width: 100% !important;
+
+    height: 0 !important;
+    min-height: 0 !important;
+
+    display: block !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    background: transparent !important;
+
+    border: none !important;
+
+    box-shadow: none !important;
+
+    z-index: 9999 !important;
+
+    pointer-events: none !important;
+  }
+
+  /* =======================================================
+     HIDE TITLE
+  ======================================================= */
+
+  .mobile-brand,
+  .mobile-brand-text {
+    display: none !important;
+
+    visibility: hidden !important;
+  }
+
+  /* =======================================================
+     LOGOUT
+  ======================================================= */
+
+  .mobile-header-actions {
+    position: fixed !important;
+
+    top: 7px !important;
+    right: 14px !important;
+
+    width: auto !important;
+    height: auto !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    z-index: 10000 !important;
+
+    pointer-events: auto !important;
+  }
+
+  .mobile-logout-button {
+    width: 40px !important;
+    height: 40px !important;
+
+    min-width: 40px !important;
+    min-height: 40px !important;
+
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    border: none !important;
+    outline: none !important;
+
+    border-radius: 0 !important;
+
+    background: transparent !important;
+    background-color: transparent !important;
+
+    box-shadow: none !important;
+
+    color: #334155 !important;
+
+    font-family: Arial, Helvetica, sans-serif !important;
+
+    font-size: 29px !important;
+    font-weight: 400 !important;
+
+    line-height: 1 !important;
+
+    cursor: pointer;
+  }
+
+  .mobile-logout-button:hover,
+  .mobile-logout-button:focus,
+  .mobile-logout-button:focus-visible,
+  .mobile-logout-button:active {
+    border: none !important;
+    outline: none !important;
+
+    background: transparent !important;
+    background-color: transparent !important;
+
+    box-shadow: none !important;
+
+    color: #334155 !important;
+  }
+
+  /* =======================================================
+     MAIN
+  ======================================================= */
+
+  .main-area {
+    width: 100% !important;
+
+    min-height: calc(100dvh - 82px) !important;
+
+    margin: 0 !important;
+
+    padding: 0 0 15px 0 !important;
+
+    position: relative !important;
+
+    left: 0 !important;
+    right: auto !important;
+
+    transform: none !important;
+
+    background: #f5f9fd !important;
+
+    overflow-x: hidden !important;
+  }
+
+  /* =======================================================
+     REMOVE DESKTOP HEADER
+  ======================================================= */
+
+  .main-area::before,
+  .welcome {
+    display: none !important;
+  }
+
+  /* =======================================================
+     CONTENT
+  ======================================================= */
+
+  .summary-grid,
+  .debts-section,
+  .form-container,
+  .form-card,
+  .dashboard-panels,
+  .calendar-container,
+  .page-content {
+    position: relative !important;
+
+    left: 0 !important;
+    right: auto !important;
+
+    transform: none !important;
+  }
+
+  .summary-grid,
+  .debts-section,
+  .dashboard-panels,
+  .calendar-container {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  .form-container,
+  .form-card,
+  .page-content {
+    margin-left: 16px !important;
+    margin-right: 16px !important;
+  }
+
+  /* =======================================================
+     BOTTOM NAV
+  ======================================================= */
+
+  .sidebar {
+    position: fixed !important;
+
+    left: 0 !important;
+    right: 0 !important;
+
+    top: auto !important;
+    bottom: 0 !important;
+
+    width: 100% !important;
+
+    height: 82px !important;
+
+    display: flex !important;
+
+    flex-direction: row !important;
+
+    margin: 0 !important;
+
+    border-top: 1px solid #dfe7ee !important;
+    border-right: none !important;
+
+    background: rgba(255, 255, 255, 0.97) !important;
+
+    box-shadow: 0 -3px 15px rgba(30, 60, 90, 0.08);
+
+    z-index: 1000 !important;
+
+    overflow: hidden !important;
+  }
+
+  .sidebar-logo,
+  .sidebar-footer {
+    display: none !important;
+  }
+
+  .sidebar-nav {
+    width: max-content !important;
+    min-width: 100% !important;
+
+    height: 82px !important;
+
+    display: flex !important;
+
+    align-items: stretch !important;
+
+    justify-content: flex-start !important;
+
+    padding: 4px 8px !important;
+
+    gap: 2px !important;
+
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+
+    -webkit-overflow-scrolling: touch !important;
+
+    overscroll-behavior-x: contain !important;
+
+    scrollbar-width: none !important;
+
+    touch-action: pan-x !important;
+  }
+
+  .sidebar-nav::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nav-title,
+  .nav-title.second {
+    display: none !important;
+  }
+
+  .nav-item {
+    flex: 0 0 82px !important;
+
+    width: 82px !important;
+    min-width: 82px !important;
+
+    height: 74px !important;
+
+    display: flex !important;
+
+    flex-direction: column !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    gap: 4px !important;
+
+    padding: 6px 3px !important;
+
+    margin: 0 !important;
+
+    border-radius: 8px !important;
+
+    font-size: 10px !important;
+
+    white-space: normal !important;
+
+    text-align: center !important;
+
+    line-height: 1.15 !important;
+
+    flex-shrink: 0 !important;
+
+    touch-action: manipulation !important;
+  }
+
+  .nav-icon {
+    width: auto !important;
+
+    display: inline-flex !important;
+
+    align-items: center !important;
+    justify-content: center !important;
+
+    font-size: 21px !important;
+
+    line-height: 1 !important;
+
+    flex-shrink: 0 !important;
+  }
+}
+
+/* =========================================================
+   BENEFIT CARDS
+========================================================= */
+
+.benefit-card-info {
+  min-width: 0;
+}
+
+.benefit-card-info strong {
+  display: block;
+}
+
+.benefit-card-info span {
+  display: block;
+
+  margin-top: 4px;
+}
+
+.benefit-card-balance {
+  white-space: nowrap;
+
+  font-size: 15px !important;
+
+  font-weight: 600 !important;
+}
+
+/* =========================================================
+   BENEFIT CARDS - MOBILE
+========================================================= */
+
+@media screen and (max-width: 700px) {
+  .benefit-card-info span {
+    line-height: 1.5;
+  }
+
+  .benefit-card-balance {
+    font-size: 14px !important;
+  }
+}
+
+/* =========================================================
+   BENEFIT CARDS - LANDSCAPE
+========================================================= */
+
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .benefit-card-info span {
+    line-height: 1.4;
+  }
+
+  .benefit-card-balance {
+    font-size: 14px !important;
   }
 }
 
