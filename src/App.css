@@ -4891,3 +4891,283 @@ select {
     font-size: 16px !important;
   }
 }
+/* =========================================================
+   RECEIPTS HISTORY
+========================================================= */
+
+.receipts-history {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.receipts-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 18px;
+}
+
+.receipts-history-header h2 {
+  margin: 0;
+}
+
+.receipts-history-header p {
+  margin: 5px 0 0;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.receipts-count {
+  min-width: 28px;
+  height: 28px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 8px;
+
+  border-radius: 14px;
+
+  background: rgba(0, 0, 0, 0.06);
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.receipts-empty {
+  padding: 28px 15px;
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.receipts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.receipt-history-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 14px 16px;
+
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+
+  background: var(--card-background, #ffffff);
+}
+
+.receipt-history-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.receipt-history-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 9px;
+
+  background: rgba(0, 0, 0, 0.05);
+
+  font-size: 18px;
+}
+
+.receipt-history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  min-width: 0;
+}
+
+.receipt-history-info strong {
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.receipt-history-info span {
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.receipt-history-category {
+  opacity: 0.5 !important;
+}
+
+.receipt-history-right {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+}
+
+.receipt-history-amount {
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.receipt-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.receipt-history-actions .secondary-button {
+  white-space: nowrap;
+}
+
+/* =========================================================
+   RECEIPT VIEWER
+========================================================= */
+
+.receipt-viewer-overlay {
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 10000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.receipt-viewer {
+  width: min(900px, 100%);
+  max-height: calc(100vh - 40px);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.receipt-viewer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+
+  padding: 15px 18px;
+
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.receipt-viewer-header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.receipt-viewer-header span {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.receipt-viewer-content {
+  overflow: auto;
+
+  padding: 20px;
+
+  text-align: center;
+}
+
+.receipt-viewer-image {
+  display: block;
+
+  width: auto;
+  max-width: 100%;
+  height: auto;
+
+  max-height: calc(100vh - 150px);
+
+  margin: 0 auto;
+
+  border-radius: 8px;
+}
+
+/* =========================================================
+   RECEIPTS MOBILE
+========================================================= */
+
+@media screen and (max-width: 700px) {
+  .receipts-history {
+    margin-top: 24px;
+    padding-top: 20px;
+  }
+
+  .receipt-history-item {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .receipt-history-main {
+    min-width: 0;
+  }
+
+  .receipt-history-right {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  .receipt-history-amount {
+    font-size: 13px;
+  }
+
+  .receipt-history-actions {
+    gap: 4px;
+  }
+
+  .receipt-history-actions .secondary-button {
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+
+  .receipt-viewer-overlay {
+    padding: 10px;
+  }
+
+  .receipt-viewer {
+    max-height: calc(100vh - 20px);
+    border-radius: 12px;
+  }
+
+  .receipt-viewer-content {
+    padding: 10px;
+  }
+
+  .receipt-viewer-image {
+    max-height: calc(100vh - 100px);
+  }
+}
