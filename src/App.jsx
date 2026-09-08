@@ -1198,6 +1198,8 @@ function Dashboard({ session }) {
           <MobileNavigation
             activePage={activePage}
             onNavigate={handleNavigation}
+            toolsMenuOpen={toolsMenuOpen}
+            onToggleTools={() => setToolsMenuOpen((current) => !current)}
           />
 
           <div className="mobile-menu-divider"></div>
@@ -1527,7 +1529,12 @@ function SidebarButton({ active, onClick, icon, children }) {
    MOBILE NAVIGATION
 ========================================================= */
 
-function MobileNavigation({ activePage, onNavigate }) {
+function MobileNavigation({
+  activePage,
+  onNavigate,
+  toolsMenuOpen,
+  onToggleTools,
+}) {
   const items = [
     ["dashboard", "⌂", "Dashboard"],
     ["debts", "€", "Οφειλές"],
@@ -1557,6 +1564,75 @@ function MobileNavigation({ activePage, onNavigate }) {
           {label}
         </button>
       ))}
+
+      {/* =====================================================
+          ΕΡΓΑΛΕΙΑ - MOBILE
+      ===================================================== */}
+
+      <div className="mobile-tools-section">
+        <button
+          type="button"
+          className={`mobile-nav-item mobile-tools-button ${
+            toolsMenuOpen ? "active" : ""
+          }`}
+          onClick={onToggleTools}
+          aria-expanded={toolsMenuOpen}
+        >
+          <span>◆</span>
+          <span className="mobile-tools-label">Εργαλεία</span>
+          <span className="mobile-tools-arrow">
+            {toolsMenuOpen ? "▲" : "▼"}
+          </span>
+        </button>
+
+        {toolsMenuOpen && (
+          <div className="mobile-tools-submenu">
+            <button
+              type="button"
+              className={`mobile-tools-submenu-item ${
+                activePage === "receipts" ? "active" : ""
+              }`}
+              onClick={() => onNavigate("receipts")}
+            >
+              <span>▣</span>
+              Αποδείξεις
+            </button>
+
+            <button
+              type="button"
+              className={`mobile-tools-submenu-item ${
+                activePage === "debt-planner" ? "active" : ""
+              }`}
+              onClick={() => onNavigate("debt-planner")}
+            >
+              <span>€</span>
+              Αποπληρωμή χρεών
+            </button>
+
+            <button
+              type="button"
+              className={`mobile-tools-submenu-item ${
+                activePage === "forecast" ? "active" : ""
+              }`}
+              onClick={() => onNavigate("forecast")}
+            >
+              <span>↗</span>
+              Προβλέψεις
+            </button>
+
+            <button
+              type="button"
+              className={`mobile-tools-submenu-item ${
+                activePage === "spending-limit" ? "active" : ""
+              }`}
+              onClick={() => onNavigate("spending-limit")}
+            >
+              <span>◉</span>
+              Διαθέσιμο ποσό
+            </button>
+          </div>
+        )}
+      </div>
     </>
   );
 }
