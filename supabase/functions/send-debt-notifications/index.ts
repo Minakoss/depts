@@ -210,6 +210,21 @@ Deno.serve(async (req) => {
           url: "/",
           tag: `debt-${debt.id}`,
         };
+        const { data: alreadyLogged } = await supabase
+  .from("notification_log")
+  .select("id")
+  .eq("user_id", userId)
+  .eq("notification_type", "debt_due")
+  .eq("reference_id", debt.id)
+  .eq("notification_date", todayString)
+  .maybeSingle();
+
+if (alreadyLogged) {
+  console.log(
+    `Notification already sent for debt ${debt.id}`
+  );
+  continue;
+}
 
 
         /* ---------------------------------------------
@@ -246,6 +261,14 @@ Deno.serve(async (req) => {
             console.log(
               `Notification sent for debt ${debt.id}`
             );
+            await supabase
+  .from("notification_log")
+  .insert({
+    user_id: userId,
+    notification_type: "debt_due",
+    reference_id: debt.id,
+    notification_date: todayString,
+  });
 
           } catch (error) {
 

@@ -5171,3 +5171,215 @@ select {
     max-height: calc(100vh - 100px);
   }
 }
+
+/* =========================================================
+   RECEIPT ACTION BUTTONS — DASHBOARD STYLE
+========================================================= */
+
+.receipt-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+/* Όλα τα βασικά κουμπιά της απόδειξης */
+.receipt-actions .primary-button,
+.receipt-actions .secondary-button {
+  width: auto;
+  min-width: 0;
+  height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0 4px;
+
+  border: none !important;
+  outline: none !important;
+  border-radius: 0;
+
+  background: transparent !important;
+
+  color: #111111 !important;
+
+  font-size: 17px;
+  font-weight: 500;
+
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: none !important;
+
+  transition:
+    color 0.2s ease,
+    transform 0.1s ease;
+}
+
+/* Φωτογράφιση — κρατάμε το μπλε σαν βασική ενέργεια */
+.receipt-actions .primary-button {
+  color: #287bc1 !important;
+}
+
+/* Hover */
+.receipt-actions .primary-button:hover,
+.receipt-actions .secondary-button:hover {
+  background: transparent !important;
+  color: #287bc1 !important;
+  transform: scale(1.08);
+}
+
+/* Disabled */
+.receipt-actions button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+  transform: none;
+}
+
+/* =========================================================
+   RECEIPT SECONDARY ACTIONS
+========================================================= */
+
+.receipt-actions .secondary-button {
+  color: #65727e !important;
+}
+/* =========================================================
+   RECEIPT ACTION BUTTONS
+   Dashboard style
+========================================================= */
+
+.receipt-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.receipt-action-button {
+  width: auto;
+  height: 32px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0;
+  padding: 0 3px;
+
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  color: #65727e !important;
+
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+
+  cursor: pointer;
+
+  box-shadow: none !important;
+
+  transition:
+    color 0.2s ease,
+    transform 0.1s ease;
+}
+
+/* Εικονίδιο */
+
+.receipt-action-icon {
+  width: 22px;
+  height: 22px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-right: 2px;
+
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* Πρώτο / βασικό κουμπί */
+
+.receipt-action-button.primary {
+  color: #287bc1 !important;
+}
+
+/* Hover */
+
+.receipt-action-button:hover {
+  background: transparent !important;
+  color: #287bc1 !important;
+
+  transform: scale(1.05);
+}
+
+/* Πατημένο */
+
+.receipt-action-button:active {
+  transform: scale(0.96);
+}
+
+/* Disabled */
+
+.receipt-action-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+  transform: none;
+}
+
+/* =========================================================
+   RECEIPT HISTORY ACTIONS
+   Ίδιο στιλ με το Dashboard
+========================================================= */
+
+.receipt-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.receipt-history-actions .secondary-button {
+  width: 32px !important;
+  height: 32px !important;
+
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  padding: 0 !important;
+  margin: 0 !important;
+
+  border: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+
+  background: transparent !important;
+  color: #65727e !important;
+
+  box-shadow: none !important;
+
+  font-size: 17px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    color 0.2s ease,
+    transform 0.1s ease;
+}
+
+.receipt-history-actions .secondary-button:hover {
+  background: transparent !important;
+  color: #287bc1 !important;
+
+  transform: scale(1.1);
+}

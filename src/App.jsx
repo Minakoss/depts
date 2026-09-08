@@ -8,6 +8,7 @@ import {
 import { supabase } from "./lib/supabaseClient";
 import "./App.css";
 import ReceiptsPage from "./ReceiptsPage";
+import RecurringExpensesPage from "./RecurringExpensesPage";
 
 /* =========================================================
    PROVIDERS / CATEGORIES
@@ -1369,6 +1370,16 @@ function Dashboard({ session }) {
                 <span>▣</span>
                 Αποδείξεις
               </button>
+              <button
+                type="button"
+                className={`tools-submenu-item ${
+                  activePage === "recurring-expenses" ? "active" : ""
+                }`}
+                onClick={() => handleToolsNavigation("recurring-expenses")}
+              >
+                <span>↻</span>
+                Επαναλαμβανόμενα έξοδα
+              </button>
 
               <button
                 type="button"
@@ -1438,6 +1449,16 @@ function Dashboard({ session }) {
           >
             <span>▣</span>
             Αποδείξεις
+          </button>
+          <button
+            type="button"
+            className={`mobile-tools-popup-item ${
+              activePage === "recurring-expenses" ? "active" : ""
+            }`}
+            onClick={() => handleToolsNavigation("recurring-expenses")}
+          >
+            <span>↻</span>
+            Επαναλαμβανόμενα έξοδα
           </button>
 
           <button
@@ -1520,7 +1541,9 @@ function Dashboard({ session }) {
 
         {activePage === "settings" && <SettingsPage session={session} />}
         {activePage === "receipts" && <ReceiptsPage session={session} />}
-
+        {activePage === "recurring-expenses" && (
+          <RecurringExpensesPage session={session} />
+        )}
         {activePage === "debt-planner" && <DebtPlannerPage session={session} />}
 
         {activePage === "forecast" && <ForecastPage session={session} />}

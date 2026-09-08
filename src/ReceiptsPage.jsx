@@ -746,35 +746,57 @@ export default function ReceiptsPage({ session }) {
           <div className="receipt-actions">
             <button
               type="button"
-              className="primary-button"
+              className="receipt-action-button primary"
               onClick={() => cameraInputRef.current?.click()}
             >
-              📷 Φωτογράφιση
+              <span className="receipt-action-icon">📷</span>
+              <span>Φωτογράφιση</span>
             </button>
 
             <button
               type="button"
-              className="secondary-button"
+              className="receipt-action-button"
               onClick={() => fileInputRef.current?.click()}
             >
-              🖼️ Επιλογή εικόνας
+              <span className="receipt-action-icon">▣</span>
+              <span>Επιλογή εικόνας</span>
             </button>
 
             <button
               type="button"
-              className="secondary-button"
+              className="receipt-action-button"
               onClick={startQRScanner}
               disabled={qrScanning}
             >
-              ▣ Σάρωση QR
+              <span className="receipt-action-icon qr-icon">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 3h7v7H3V3zm2 2v3h3V5H5z
+         M14 3h7v7h-7V3zm2 2v3h3V5h-3z
+         M3 14h7v7H3v-7zm2 2v3h3v-3H5z
+         M14 14h3v3h-3v-3zm5 0h2v2h-2v-2zm-5 5h2v2h-2v-2zm3-3h4v4h-2v-2h-2v-2z"
+                    fill="currentColor"
+                  />
+                </svg>
+              </span>{" "}
+              <span>Σάρωση QR</span>
             </button>
+
             <button
               type="button"
-              className="secondary-button"
+              className="receipt-action-button"
               onClick={analyzeReceiptWithAI}
               disabled={!selectedFile || processing}
             >
-              {processing ? "🤖 Ανάλυση..." : "🤖 Ανάλυση με AI"}
+              <span className="receipt-action-icon">
+                {processing ? "…" : "✦"}
+              </span>
+              <span>{processing ? "Ανάλυση..." : "Ανάλυση με AI"}</span>
             </button>
           </div>
         )}
