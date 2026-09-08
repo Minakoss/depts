@@ -7,6 +7,7 @@ import {
 } from "./notifications";
 import { supabase } from "./lib/supabaseClient";
 import "./App.css";
+import ReceiptsPage from "./ReceiptsPage";
 
 /* =========================================================
    PROVIDERS / CATEGORIES
@@ -1120,7 +1121,7 @@ function Dashboard({ session }) {
   const [activePage, setActivePage] = useState("dashboard");
   const [editingDebt, setEditingDebt] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [toolsMenuOpen, setToolsMenuOpen] = useState(false);
   const handleLogout = async () => {
     const confirmed = window.confirm("Θέλετε σίγουρα να αποσυνδεθείτε;");
 
@@ -1145,6 +1146,13 @@ function Dashboard({ session }) {
 
   const handleNavigation = (page) => {
     setActivePage(page);
+    setMobileMenuOpen(false);
+    setToolsMenuOpen(false);
+  };
+
+  const handleToolsNavigation = (page) => {
+    setActivePage(page);
+    setToolsMenuOpen(false);
     setMobileMenuOpen(false);
   };
 
@@ -1337,6 +1345,63 @@ function Dashboard({ session }) {
           >
             Ρυθμίσεις
           </SidebarButton>
+          <div className="nav-title second">ΕΡΓΑΛΕΙΑ</div>
+
+          <SidebarButton
+            active={toolsMenuOpen}
+            onClick={() => setToolsMenuOpen((current) => !current)}
+            icon="◆"
+          >
+            Εργαλεία
+          </SidebarButton>
+
+          {toolsMenuOpen && (
+            <div className="tools-submenu">
+              <button
+                type="button"
+                className={`tools-submenu-item ${
+                  activePage === "receipts" ? "active" : ""
+                }`}
+                onClick={() => handleToolsNavigation("receipts")}
+              >
+                <span>▣</span>
+                Αποδείξεις
+              </button>
+
+              <button
+                type="button"
+                className={`tools-submenu-item ${
+                  activePage === "debt-planner" ? "active" : ""
+                }`}
+                onClick={() => handleToolsNavigation("debt-planner")}
+              >
+                <span>€</span>
+                Αποπληρωμή χρεών
+              </button>
+
+              <button
+                type="button"
+                className={`tools-submenu-item ${
+                  activePage === "forecast" ? "active" : ""
+                }`}
+                onClick={() => handleToolsNavigation("forecast")}
+              >
+                <span>↗</span>
+                Προβλέψεις
+              </button>
+
+              <button
+                type="button"
+                className={`tools-submenu-item ${
+                  activePage === "spending-limit" ? "active" : ""
+                }`}
+                onClick={() => handleToolsNavigation("spending-limit")}
+              >
+                <span>◉</span>
+                Διαθέσιμο ποσό
+              </button>
+            </div>
+          )}
         </nav>
 
         <div className="sidebar-footer">
@@ -1406,6 +1471,15 @@ function Dashboard({ session }) {
         )}
 
         {activePage === "settings" && <SettingsPage session={session} />}
+        {activePage === "receipts" && <ReceiptsPage session={session} />}
+
+        {activePage === "debt-planner" && <DebtPlannerPage session={session} />}
+
+        {activePage === "forecast" && <ForecastPage session={session} />}
+
+        {activePage === "spending-limit" && (
+          <SpendingLimitPage session={session} />
+        )}
 
         {activePage === "new-debt" && (
           <NewDebtPage

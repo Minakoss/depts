@@ -4470,3 +4470,160 @@ select {
     font-size: 14px !important;
   }
 }
+
+/* =========================================================
+   TOOLS SUBMENU
+   Νέα λειτουργία - δεν επηρεάζει το υπάρχον menu
+========================================================= */
+
+.tools-submenu {
+  margin: -4px 12px 10px 38px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tools-submenu-item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.78;
+}
+
+.tools-submenu-item:hover {
+  opacity: 1;
+}
+
+.tools-submenu-item.active {
+  opacity: 1;
+}
+
+.tools-submenu-item span {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+/* =========================================================
+   RECEIPTS
+========================================================= */
+
+.receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.receipt-preview {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.receipt-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.receipt-file-name {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.receipt-image-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+}
+
+.receipt-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 700px;
+  object-fit: contain;
+}
+
+.receipt-process {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.receipt-message {
+  margin-top: 20px;
+  padding: 12px 15px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+}
+/* =========================================================
+   RECEIPT QR SCANNER
+========================================================= */
+
+.receipt-qr-scanner {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.receipt-qr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.receipt-qr-reader {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.receipt-qr-reader video {
+  width: 100% !important;
+  height: auto !important;
+  border-radius: 10px;
+}
+
+.receipt-qr-help {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.receipt-qr-result {
+  margin-top: 20px;
+  padding: 15px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.receipt-qr-value {
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-all;
+  opacity: 0.8;
+}
