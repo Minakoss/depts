@@ -1427,7 +1427,53 @@ function Dashboard({ session }) {
           </button>
         </div>
       </aside>
+      {toolsMenuOpen && (
+        <div className="mobile-tools-popup">
+          <button
+            type="button"
+            className={`mobile-tools-popup-item ${
+              activePage === "receipts" ? "active" : ""
+            }`}
+            onClick={() => handleToolsNavigation("receipts")}
+          >
+            <span>▣</span>
+            Αποδείξεις
+          </button>
 
+          <button
+            type="button"
+            className={`mobile-tools-popup-item ${
+              activePage === "debt-planner" ? "active" : ""
+            }`}
+            onClick={() => handleToolsNavigation("debt-planner")}
+          >
+            <span>€</span>
+            Αποπληρωμή χρεών
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tools-popup-item ${
+              activePage === "forecast" ? "active" : ""
+            }`}
+            onClick={() => handleToolsNavigation("forecast")}
+          >
+            <span>↗</span>
+            Προβλέψεις
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-tools-popup-item ${
+              activePage === "spending-limit" ? "active" : ""
+            }`}
+            onClick={() => handleToolsNavigation("spending-limit")}
+          >
+            <span>◉</span>
+            Διαθέσιμο ποσό
+          </button>
+        </div>
+      )}
       {/* MAIN */}
 
       <main className="main-area">
