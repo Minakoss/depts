@@ -4698,3 +4698,105 @@ select {
   flex-shrink: 0;
   text-align: center;
 }
+/* =========================================================
+   MOBILE TOOLS MENU
+   Το υπομενού εμφανίζεται πάνω από το bottom navigation
+========================================================= */
+
+@media screen and (max-width: 700px) {
+  .sidebar-nav .tools-submenu {
+    position: fixed !important;
+
+    left: 50% !important;
+    right: auto !important;
+    bottom: 104px !important;
+
+    transform: translateX(-50%) !important;
+
+    width: min(280px, calc(100vw - 24px)) !important;
+
+    margin: 0 !important;
+    padding: 8px !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+
+    gap: 3px !important;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dfe7ee !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 8px 30px rgba(30, 60, 90, 0.18) !important;
+
+    z-index: 5000 !important;
+  }
+
+  .sidebar-nav .tools-submenu-item {
+    width: 100% !important;
+
+    min-height: 42px !important;
+
+    display: flex !important;
+    align-items: center !important;
+
+    gap: 10px !important;
+
+    padding: 9px 12px !important;
+
+    margin: 0 !important;
+
+    border: none !important;
+    border-radius: 7px !important;
+
+    background: transparent !important;
+
+    color: #354052 !important;
+
+    font-size: 11px !important;
+
+    text-align: left !important;
+
+    cursor: pointer !important;
+  }
+
+  .sidebar-nav .tools-submenu-item:hover,
+  .sidebar-nav .tools-submenu-item.active {
+    background: #f3f7fb !important;
+  }
+
+  .sidebar-nav .tools-submenu-item span {
+    width: 20px !important;
+
+    flex-shrink: 0 !important;
+
+    text-align: center !important;
+
+    font-size: 14px !important;
+  }
+
+  /*
+     Το "Εργαλεία" παραμένει κανονικά
+     μέσα στο υπάρχον bottom navigation.
+  */
+
+  .sidebar-nav .tools-submenu::before {
+    content: "";
+
+    position: absolute;
+
+    bottom: -7px;
+    left: 50%;
+
+    width: 14px;
+    height: 14px;
+
+    transform: translateX(-50%) rotate(45deg);
+
+    background: #ffffff;
+
+    border-right: 1px solid #dfe7ee;
+    border-bottom: 1px solid #dfe7ee;
+  }
+}
