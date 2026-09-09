@@ -446,9 +446,7 @@ export default function ReceiptsPage({ session }) {
 
         await scanner.start(
           {
-            facingMode: {
-              ideal: "environment",
-            },
+            facingMode: "environment",
           },
           {
             fps: 10,
