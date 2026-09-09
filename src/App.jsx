@@ -1753,8 +1753,9 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         .from("debts")
         .select("*")
         .eq("user_id", session.user.id)
-        .gte("due_date", startDate)
-        .lt("due_date", endDate),
+        .or(
+          `and(due_date.gte.${startDate},due_date.lt.${endDate}),and(due_date.lt.${startDate},paid.eq.false)`,
+        ),
 
       /* =====================================================
          ΕΣΟΔΑ
@@ -2207,7 +2208,12 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
           ) : (
             debts.map((debt) =>
               debt.sourceType === "debt" ? (
-                <DebtRow key={debt.id} debt={debt} onEdit={onEditDebt} />
+                <DebtRow
+                  key={debt.id}
+                  debt={debt}
+                  onEdit={onEditDebt}
+                  selectedMonth={selectedMonth}
+                />
               ) : (
                 <DashboardLinkedDebtRow key={debt.id} debt={debt} />
               ),
@@ -2460,14 +2466,24 @@ function DashboardLinkedDebtRow({ debt }) {
    DEBT ROW
 ========================================================= */
 
-function DebtRow({ debt, onEdit }) {
+function DebtRow({ debt, onEdit, selectedMonth = null }) {
   const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const status = getDebtStatus(debt);
 
   const formattedDate = debt.due_date ? formatDate(debt.due_date) : "-";
+  const selectedMonthStart = selectedMonth
+    ? `${selectedMonth.getFullYear()}-${String(
+        selectedMonth.getMonth() + 1,
+      ).padStart(2, "0")}-01`
+    : null;
 
+  const isCarriedOver =
+    !debt.paid &&
+    selectedMonth &&
+    debt.due_date &&
+    debt.due_date < selectedMonthStart;
   const togglePaid = async () => {
     setUpdating(true);
 
@@ -2534,7 +2550,12 @@ function DebtRow({ debt, onEdit }) {
 
       <div className="debt-info">
         <strong>{debt.provider}</strong>
-        <span>{debt.description || "Οφειλή"}</span>
+        <span>
+          {debt.description || "Οφειλή"}
+          {isCarriedOver && (
+            <small className="debt-carried-over">Μεταφέρθηκε</small>
+          )}
+        </span>
       </div>
 
       <div className="debt-due">
@@ -2579,7 +2600,406 @@ function DebtRow({ debt, onEdit }) {
     </div>
   );
 }
+/* =========================================================
+   FORECAST
+========================================================= */
 
+function ForecastPage({ session }) {
+  const [months, setMonths] = useState(3);
+  const [loading, setLoading] = useState(true);
+  const [forecast, setForecast] = useState([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!session?.user?.id) {
+      return;
+    }
+
+    loadForecast();
+  }, [session, months]);
+
+  const loadForecast = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const userId = session.user.id;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+
+      const endDate = new Date(
+        today.getFullYear(),
+        today.getMonth() + months + 1,
+        0,
+      );
+
+      const start = `${startDate.getFullYear()}-${String(
+        startDate.getMonth() + 1,
+      ).padStart(2, "0")}-01`;
+
+      const end = `${endDate.getFullYear()}-${String(
+        endDate.getMonth() + 1,
+      ).padStart(2, "0")}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+      const [
+        incomeResult,
+        expensesResult,
+        debtsResult,
+        recurringExpensesResult,
+      ] = await Promise.all([
+        supabase
+          .from("income")
+          .select("*")
+          .eq("user_id", userId)
+          .gte("income_date", start)
+          .lte("income_date", end),
+
+        supabase
+          .from("expenses")
+          .select("*")
+          .eq("user_id", userId)
+          .gte("expense_date", start)
+          .lte("expense_date", end),
+
+        supabase.from("debts").select("*").eq("user_id", userId),
+
+        supabase
+          .from("recurring_expenses")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("active", true),
+      ]);
+
+      if (incomeResult.error) {
+        throw incomeResult.error;
+      }
+
+      if (expensesResult.error) {
+        throw expensesResult.error;
+      }
+
+      if (debtsResult.error) {
+        throw debtsResult.error;
+      }
+
+      if (recurringExpensesResult.error) {
+        throw recurringExpensesResult.error;
+      }
+
+      const income = incomeResult.data || [];
+      const expenses = expensesResult.data || [];
+      const debts = debtsResult.data || [];
+      const recurringExpenses = recurringExpensesResult.data || [];
+      const result = [];
+      let cumulativeBalance = 0;
+
+      for (let index = 0; index < months; index++) {
+        const monthDate = new Date(
+          today.getFullYear(),
+          today.getMonth() + index,
+          1,
+        );
+
+        const year = monthDate.getFullYear();
+        const month = monthDate.getMonth();
+
+        const monthStart = `${year}-${String(month + 1).padStart(2, "0")}-01`;
+
+        const nextMonth = new Date(year, month + 1, 1);
+
+        const monthEnd = `${nextMonth.getFullYear()}-${String(
+          nextMonth.getMonth() + 1,
+        ).padStart(2, "0")}-01`;
+
+        const actualMonthIncome = income
+          .filter((item) => {
+            return (
+              item.income_date >= monthStart && item.income_date < monthEnd
+            );
+          })
+          .reduce((sum, item) => {
+            return sum + Number(item.amount || 0);
+          }, 0);
+
+        let monthIncome = actualMonthIncome;
+
+        /*
+         * Για τους επόμενους μήνες χρησιμοποιούμε
+         * τα επαναλαμβανόμενα έσοδα ως πρόβλεψη.
+         *
+         * Παίρνουμε την πιο πρόσφατη καταχώρηση
+         * για κάθε διαφορετικό επαναλαμβανόμενο έσοδο,
+         * ώστε παλιές μηνιαίες καταχωρήσεις να μην
+         * αθροίζονται μεταξύ τους.
+         */
+
+        if (index > 0) {
+          const recurringIncomeMap = new Map();
+
+          income
+            .filter((item) => item.recurring)
+            .sort((a, b) => {
+              return String(b.income_date).localeCompare(String(a.income_date));
+            })
+            .forEach((item) => {
+              const key = `${item.description || ""}|${item.category || ""}`;
+
+              if (!recurringIncomeMap.has(key)) {
+                recurringIncomeMap.set(key, item);
+              }
+            });
+
+          const recurringIncome = Array.from(
+            recurringIncomeMap.values(),
+          ).reduce((sum, item) => {
+            return sum + Number(item.amount || 0);
+          }, 0);
+
+          monthIncome = recurringIncome;
+        }
+
+        const monthExpenses = expenses
+          .filter((item) => {
+            return (
+              item.expense_date >= monthStart && item.expense_date < monthEnd
+            );
+          })
+          .reduce((sum, item) => {
+            return sum + Number(item.amount || 0);
+          }, 0);
+
+        const recurringTotal = recurringExpenses.reduce((sum, item) => {
+          const day = Number(item.day_of_month || 1);
+
+          const recurringDate = new Date(
+            year,
+            month,
+            Math.min(day, new Date(year, month + 1, 0).getDate()),
+          );
+
+          const recurringDateString = `${year}-${String(month + 1).padStart(
+            2,
+            "0",
+          )}-${String(recurringDate.getDate()).padStart(2, "0")}`;
+
+          const starts =
+            !item.start_date || recurringDateString >= item.start_date;
+
+          const ends = !item.end_date || recurringDateString <= item.end_date;
+
+          if (starts && ends) {
+            return sum + Number(item.amount || 0);
+          }
+
+          return sum;
+        }, 0);
+
+        /*
+         * Υπολογίζουμε τις οφειλές του μήνα.
+         *
+         * Μια απλήρωτη παλαιότερη οφειλή μεταφέρεται
+         * στον επόμενο μήνα και συνεχίζει να εμφανίζεται
+         * μέχρι να πληρωθεί.
+         */
+
+        const monthDebtsList = debts.filter((debt) => {
+          if (debt.paid) {
+            return debt.due_date >= monthStart && debt.due_date < monthEnd;
+          }
+
+          return debt.due_date < monthEnd;
+        });
+
+        const monthDebts = monthDebtsList.reduce((sum, debt) => {
+          return sum + Number(debt.amount || 0);
+        }, 0);
+
+        const newDebts = monthDebtsList
+          .filter((debt) => {
+            return debt.due_date >= monthStart && debt.due_date < monthEnd;
+          })
+          .reduce((sum, debt) => {
+            return sum + Number(debt.amount || 0);
+          }, 0);
+
+        const carriedDebts = monthDebtsList
+          .filter((debt) => {
+            return !debt.paid && debt.due_date < monthStart;
+          })
+          .reduce((sum, debt) => {
+            return sum + Number(debt.amount || 0);
+          }, 0);
+
+        const totalExpenses = monthExpenses + recurringTotal;
+
+        const monthlyBalance = monthIncome - totalExpenses - monthDebts;
+
+        cumulativeBalance += monthlyBalance;
+
+        const balance = cumulativeBalance;
+        result.push({
+          date: monthDate,
+          income: monthIncome,
+          expenses: totalExpenses,
+          debts: monthDebts,
+          newDebts,
+          carriedDebts,
+          balance,
+        });
+      }
+
+      setForecast(result);
+    } catch (err) {
+      console.error("Forecast error:", err);
+      setError("Δεν ήταν δυνατή η φόρτωση των προβλέψεων.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatMonth = (date) => {
+    return date.toLocaleDateString("el-GR", {
+      month: "long",
+      year: "numeric",
+    });
+  };
+
+  const formatMoney = (value) => {
+    return Number(value || 0).toLocaleString("el-GR", {
+      style: "currency",
+      currency: "EUR",
+    });
+  };
+
+  return (
+    <div className="page-content">
+      <div className="page-header">
+        <div>
+          <h1>Προβλέψεις</h1>
+          <p>
+            Δες πώς αναμένεται να διαμορφωθούν τα οικονομικά σου τους επόμενους
+            μήνες.
+          </p>
+        </div>
+
+        <div className="forecast-period-selector">
+          <button
+            type="button"
+            className={months === 3 ? "active" : ""}
+            onClick={() => setMonths(3)}
+          >
+            3 μήνες
+          </button>
+
+          <button
+            type="button"
+            className={months === 6 ? "active" : ""}
+            onClick={() => setMonths(6)}
+          >
+            6 μήνες
+          </button>
+
+          <button
+            type="button"
+            className={months === 12 ? "active" : ""}
+            onClick={() => setMonths(12)}
+          >
+            12 μήνες
+          </button>
+        </div>
+      </div>
+
+      {loading && (
+        <div className="form-card">
+          <p>Υπολογισμός προβλέψεων...</p>
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="form-card">
+          <p>{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="forecast-list">
+          {forecast.map((item) => (
+            <div
+              className="form-card forecast-card"
+              key={`${item.date.getFullYear()}-${item.date.getMonth()}`}
+            >
+              <div className="forecast-card-header">
+                <div>
+                  <h2>{formatMonth(item.date)}</h2>
+
+                  {item.balance >= 0 ? (
+                    <small className="forecast-status positive">
+                      Θετική πρόβλεψη
+                    </small>
+                  ) : (
+                    <small className="forecast-status negative">
+                      Αρνητική πρόβλεψη
+                    </small>
+                  )}
+                  {item.balance < 0 && (
+                    <div className="forecast-warning">
+                      ⚠️ Προβλέπεται έλλειμμα{" "}
+                      <strong>{formatMoney(Math.abs(item.balance))}</strong>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="forecast-grid">
+                <div className="forecast-item">
+                  <span>Έσοδα</span>
+                  <strong>{formatMoney(item.income)}</strong>
+                </div>
+
+                <div className="forecast-item">
+                  <span>Έξοδα</span>
+                  <strong>{formatMoney(item.expenses)}</strong>
+                </div>
+
+                <div className="forecast-item">
+                  <span>Οφειλές</span>
+
+                  <strong>{formatMoney(item.debts)}</strong>
+
+                  {item.newDebts > 0 && (
+                    <small>Νέες: {formatMoney(item.newDebts)}</small>
+                  )}
+
+                  {item.carriedDebts > 0 && (
+                    <small className="forecast-carried">
+                      Μεταφέρθηκαν: {formatMoney(item.carriedDebts)}
+                    </small>
+                  )}
+                </div>
+
+                <div className="forecast-item">
+                  <span>Προβλεπόμενο υπόλοιπο</span>
+                  <strong
+                    className={
+                      item.balance >= 0
+                        ? "forecast-positive"
+                        : "forecast-negative"
+                    }
+                  >
+                    {formatMoney(item.balance)}
+                  </strong>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 /* =========================================================
    NEW DEBT
 ========================================================= */
@@ -2814,6 +3234,101 @@ function NewDebtPage({ session, onBack, onSaved }) {
           </div>
         </form>
       </div>
+      {!loading && !error && forecast.length > 0 && (
+        <div
+          className={
+            forecast[forecast.length - 1].balance >= 0
+              ? "forecast-period-result positive"
+              : "forecast-period-result negative"
+          }
+        >
+          <span>
+            Η περίοδος προβλέπεται να κλείσει{" "}
+            {forecast[forecast.length - 1].balance >= 0 ? "θετικά" : "αρνητικά"}
+          </span>
+
+          <strong>{formatMoney(forecast[forecast.length - 1].balance)}</strong>
+        </div>
+      )}
+      {!loading && !error && forecast.length > 0 && (
+        <div className="forecast-summary-grid">
+          <div className="summary-card">
+            <span>ΣΥΝΟΛΙΚΑ ΕΣΟΔΑ</span>
+            <strong>
+              {formatMoney(
+                forecast.reduce((sum, item) => sum + item.income, 0),
+              )}
+            </strong>
+          </div>
+
+          <div className="summary-card">
+            <span>ΣΥΝΟΛΙΚΑ ΕΞΟΔΑ</span>
+            <strong>
+              {formatMoney(
+                forecast.reduce((sum, item) => sum + item.expenses, 0),
+              )}
+            </strong>
+          </div>
+
+          <div className="summary-card">
+            <span>ΣΥΝΟΛΙΚΕΣ ΟΦΕΙΛΕΣ</span>
+            <strong>
+              {formatMoney(forecast.reduce((sum, item) => sum + item.debts, 0))}
+            </strong>
+          </div>
+
+          <div className="summary-card">
+            <span>ΤΕΛΙΚΟ ΠΡΟΒΛΕΠΟΜΕΝΟ ΥΠΟΛΟΙΠΟ</span>
+            <strong
+              className={
+                forecast[forecast.length - 1].balance >= 0
+                  ? "forecast-positive"
+                  : "forecast-negative"
+              }
+            >
+              {formatMoney(forecast[forecast.length - 1].balance)}
+            </strong>
+          </div>
+        </div>
+      )}
+
+      {!loading && !error && forecast.length > 0 && (
+        <div className="forecast-conclusion">
+          {(() => {
+            const firstNegativeMonth = forecast.find(
+              (item) => item.balance < 0,
+            );
+
+            if (firstNegativeMonth) {
+              return (
+                <>
+                  <strong>⚠️ Προσοχή στην πρόβλεψη</strong>
+
+                  <span>
+                    Ο {formatMonth(firstNegativeMonth.date)} είναι ο πρώτος
+                    μήνας στον οποίο προβλέπεται αρνητικό υπόλοιπο.
+                  </span>
+
+                  <small>
+                    Προβλεπόμενο έλλειμμα:{" "}
+                    {formatMoney(Math.abs(firstNegativeMonth.balance))}
+                  </small>
+                </>
+              );
+            }
+
+            return (
+              <>
+                <strong>✓ Η πρόβλεψη είναι θετική</strong>
+
+                <span>
+                  Δεν προβλέπεται αρνητικό υπόλοιπο για την επιλεγμένη περίοδο.
+                </span>
+              </>
+            );
+          })()}
+        </div>
+      )}
     </div>
   );
 }
@@ -5965,8 +6480,9 @@ function CalendarPage({ session }) {
         .from("debts")
         .select("*")
         .eq("user_id", session.user.id)
-        .gte("due_date", start)
-        .lt("due_date", end),
+        .or(
+          `and(due_date.gte.${start},due_date.lt.${end}),and(due_date.lt.${start},paid.eq.false)`,
+        ),
 
       supabase
         .from("income")
@@ -6248,8 +6764,9 @@ function StatisticsPage({ session }) {
         .from("debts")
         .select("*")
         .eq("user_id", session.user.id)
-        .gte("due_date", start)
-        .lt("due_date", end),
+        .or(
+          `and(due_date.gte.${start},due_date.lt.${end}),and(due_date.lt.${start},paid.eq.false)`,
+        ),
 
       supabase
         .from("income")

@@ -5383,3 +5383,251 @@ select {
 
   transform: scale(1.1);
 }
+.debt-carried-over {
+  display: inline-block;
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #287bc1;
+  vertical-align: middle;
+}
+/* =========================================================
+   FORECAST
+========================================================= */
+
+.forecast-period-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.forecast-period-selector button {
+  border: none;
+  background: transparent;
+  color: #65727e;
+  padding: 7px 12px;
+  border-radius: 7px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.forecast-period-selector button:hover {
+  background: #e8f1f8;
+  color: #287bc1;
+}
+
+.forecast-period-selector button.active {
+  background: #287bc1;
+  color: #ffffff;
+}
+
+.forecast-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.forecast-card {
+  padding: 24px 28px;
+}
+
+.forecast-card-header {
+  margin-bottom: 22px;
+}
+
+.forecast-card-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: #344054;
+}
+
+.forecast-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.forecast-item {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: #f7f9fb;
+}
+
+.forecast-item span {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a8793;
+}
+
+.forecast-item strong {
+  font-size: 17px;
+  font-weight: 600;
+  color: #344054;
+}
+
+.forecast-positive {
+  color: #2f8f5b !important;
+}
+
+.forecast-negative {
+  color: #d9534f !important;
+}
+
+@media (max-width: 800px) {
+  .forecast-period-selector {
+    margin-top: 12px;
+  }
+
+  .forecast-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .forecast-card {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 500px) {
+  .forecast-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .forecast-period-selector button {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+}
+/* =========================================================
+   FORECAST - TOP SPACING FIX
+========================================================= */
+
+.page-content:has(.forecast-list) {
+  padding-top: 28px;
+}
+.forecast-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.forecast-summary-grid .summary-card {
+  margin: 0;
+}
+
+@media (max-width: 800px) {
+  .forecast-summary-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .forecast-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+.forecast-status {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.forecast-status.positive {
+  color: #2f8f5b;
+}
+
+.forecast-status.negative {
+  color: #d9534f;
+}
+.forecast-period-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 24px;
+  padding: 18px 22px;
+
+  border-radius: 10px;
+  background: #f7f9fb;
+}
+
+.forecast-period-result span {
+  font-size: 13px;
+  font-weight: 500;
+  color: #65727e;
+}
+
+.forecast-period-result strong {
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.forecast-period-result.positive strong {
+  color: #2f8f5b;
+}
+
+.forecast-period-result.negative strong {
+  color: #d9534f;
+}
+
+@media (max-width: 500px) {
+  .forecast-period-result {
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .forecast-period-result span {
+    font-size: 12px;
+  }
+
+  .forecast-period-result strong {
+    font-size: 18px;
+  }
+}
+.forecast-warning {
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #d9534f;
+}
+
+.forecast-warning strong {
+  font-weight: 600;
+}
+.forecast-conclusion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  margin-top: 18px;
+  padding: 16px 20px;
+
+  border-radius: 10px;
+  background: #f7f9fb;
+}
+
+.forecast-conclusion strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: #344054;
+}
+
+.forecast-conclusion span,
+.forecast-conclusion small {
+  font-size: 12px;
+  color: #65727e;
+}
+
+.forecast-conclusion small {
+  font-weight: 500;
+}
