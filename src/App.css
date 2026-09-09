@@ -5631,3 +5631,330 @@ select {
 .forecast-conclusion small {
   font-weight: 500;
 }
+.debt-payoff-result {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+
+  margin-top: 18px;
+}
+
+.debt-payoff-result > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+
+  padding: 18px 20px;
+
+  border-radius: 10px;
+  background: #f7f9fb;
+}
+
+.debt-payoff-result span {
+  font-size: 11px;
+  font-weight: 500;
+  color: #7a8793;
+}
+
+.debt-payoff-result strong {
+  font-size: 18px;
+  font-weight: 600;
+  color: #344054;
+}
+
+@media (max-width: 500px) {
+  .debt-payoff-result {
+    grid-template-columns: 1fr;
+  }
+}
+/* =========================================================
+   DEBT PLANNER
+   ========================================================= */
+
+.debt-planner-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.debt-planner-item {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+
+  padding: 16px 18px;
+
+  background: #ffffff;
+  border: 1px solid #dbe3ec;
+  border-radius: 12px;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.debt-planner-item:hover {
+  border-color: #c8d5e3;
+  box-shadow: 0 2px 8px rgba(30, 60, 90, 0.05);
+}
+
+.debt-planner-number {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #f1f5f9;
+  color: #475569;
+
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.debt-planner-main {
+  min-width: 0;
+}
+
+.debt-planner-title {
+  color: #344054;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.debt-planner-description {
+  margin-top: 3px;
+
+  color: #667085;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.debt-planner-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  margin-top: 7px;
+
+  color: #8a9aad;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.debt-planner-meta span {
+  white-space: nowrap;
+}
+
+.debt-planner-amount {
+  text-align: right;
+
+  color: #344054;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   DEBT PLANNER — RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+  .debt-planner-item {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+
+    padding: 14px;
+  }
+
+  .debt-planner-number {
+    width: 32px;
+    height: 32px;
+  }
+
+  .debt-planner-amount {
+    grid-column: 2;
+
+    margin-top: -4px;
+
+    text-align: left;
+    font-size: 16px;
+  }
+}
+/* =========================================================
+   DEBT PLANNER — METHOD BUTTONS
+   ========================================================= */
+
+.debt-planner-methods {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.debt-planner-method {
+  appearance: none;
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #667085;
+
+  padding: 9px 18px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.debt-planner-method:hover {
+  border-color: #b9c9da;
+  color: #344054;
+}
+
+.debt-planner-method.active {
+  background: #2f80c9;
+  border-color: #2f80c9;
+  color: #ffffff;
+  box-shadow: 0 2px 5px rgba(47, 128, 201, 0.18);
+}
+
+.debt-planner-method.active:hover {
+  background: #2f80c9;
+  border-color: #2f80c9;
+  color: #ffffff;
+}
+
+@media (max-width: 600px) {
+  .debt-planner-method {
+    padding: 8px 15px;
+  }
+}
+/* =========================================================
+   DEBT PLANNER - EXTRA PAYMENT
+   ========================================================= */
+
+.planner-extra {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.planner-extra label {
+  margin: 0;
+  color: #344054;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.planner-extra input {
+  width: 150px;
+  min-width: 150px;
+  height: 42px;
+  padding: 8px 12px;
+
+  box-sizing: border-box;
+
+  border: 1px solid #dbe3ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+  color: #344054;
+
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.planner-extra input:focus {
+  outline: none;
+  border-color: #2f80c9;
+  box-shadow: 0 0 0 3px rgba(47, 128, 201, 0.12);
+}
+
+@media (max-width: 600px) {
+  .planner-extra {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .planner-extra input {
+    width: 100%;
+    min-width: 0;
+  }
+}
+/* =========================================================
+   DEBT PLANNER - HEADER
+   ========================================================= */
+
+.debt-planner-page-header {
+  position: relative;
+  z-index: 2;
+  padding-top: 24px;
+  padding-bottom: 24px;
+}
+
+.debt-planner-page-header h1 {
+  display: block;
+  margin: 0 0 8px 0;
+
+  color: #344054;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.debt-planner-page-header p {
+  margin: 0;
+
+  color: #8a9aad;
+  font-size: 17px;
+  line-height: 1.5;
+}
+/* =========================================================
+   DEBT PLANNER - HEADER
+   Ίδια θέση και συμπεριφορά με τις υπόλοιπες σελίδες
+   ========================================================= */
+
+.debt-planner-page-header {
+  margin: 0;
+  padding: 38px 0 28px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.debt-planner-page-header h1 {
+  margin: 0;
+  padding: 0;
+
+  font-size: 36px;
+  line-height: 1.15;
+  font-weight: 700;
+
+  color: #344054;
+}
+
+.debt-planner-page-header p {
+  margin: 6px 0 0 0;
+  padding: 0;
+
+  font-size: 17px;
+  line-height: 1.4;
+
+  color: #8a9aad;
+}

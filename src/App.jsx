@@ -3014,6 +3014,8 @@ function NewDebtPage({ session, onBack, onSaved }) {
     provider: "",
     description: "",
     amount: "",
+    interest_rate: "",
+    monthly_payment: "",
     due_date: getTodayDateString(),
     category: "",
   });
@@ -3021,7 +3023,9 @@ function NewDebtPage({ session, onBack, onSaved }) {
   const filteredProviders = providers.filter(
     (item) => item.category === selectedCategory,
   );
-
+  const interestAllowed =
+    selectedCategory === "Αγορές / Δόσεις" ||
+    selectedCategory === "Πιστωτικές / Χρηματοδοτήσεις";
   const handleCategoryChange = (event) => {
     const category = event.target.value;
 
@@ -3083,13 +3087,42 @@ function NewDebtPage({ session, onBack, onSaved }) {
       return;
     }
 
+    const numericInterestRate = form.interest_rate
+      ? Number(String(form.interest_rate).replace(",", "."))
+      : null;
+
+    const numericMonthlyPayment = form.monthly_payment
+      ? Number(String(form.monthly_payment).replace(",", "."))
+      : null;
+
+    if (
+      numericInterestRate !== null &&
+      (!Number.isFinite(numericInterestRate) || numericInterestRate < 0)
+    ) {
+      alert("Συμπλήρωσε έγκυρο επιτόκιο.");
+      return;
+    }
+
+    if (
+      numericMonthlyPayment !== null &&
+      (!Number.isFinite(numericMonthlyPayment) || numericMonthlyPayment <= 0)
+    ) {
+      alert("Συμπλήρωσε έγκυρη μηνιαία δόση.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase.from("debts").insert({
       user_id: session.user.id,
       provider: form.provider,
-      description: form.description.trim(),
+      description: form.description.trim() || "Οφειλή",
       amount: numericAmount,
+
+      interest_rate: numericInterestRate,
+
+      monthly_payment: numericMonthlyPayment,
+
       due_date: form.due_date,
       category: selectedCategory,
       paid: false,
@@ -3200,6 +3233,32 @@ function NewDebtPage({ session, onBack, onSaved }) {
               />
             </div>
 
+            {interestAllowed && (
+              <div className="form-group">
+                <label>Επιτόκιο (%)</label>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  placeholder="π.χ. 18,50"
+                  value={interestRate}
+                  onChange={(e) => setInterestRate(e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="form-group">
+              <label>Μηνιαία δόση (€)</label>
+
+              <input
+                type="text"
+                inputMode="decimal"
+                name="monthly_payment"
+                placeholder="π.χ. 150,00"
+                value={form.monthly_payment}
+                onChange={handleChange}
+              />
+            </div>
+
             <div className="form-group">
               <label>Ημερομηνία λήξης</label>
 
@@ -3234,105 +3293,412 @@ function NewDebtPage({ session, onBack, onSaved }) {
           </div>
         </form>
       </div>
-      {!loading && !error && forecast.length > 0 && (
-        <div
-          className={
-            forecast[forecast.length - 1].balance >= 0
-              ? "forecast-period-result positive"
-              : "forecast-period-result negative"
-          }
-        >
-          <span>
-            Η περίοδος προβλέπεται να κλείσει{" "}
-            {forecast[forecast.length - 1].balance >= 0 ? "θετικά" : "αρνητικά"}
-          </span>
+    </div>
+  );
+}
+/* =========================================================
+   DEBT PLANNER
+========================================================= */
 
-          <strong>{formatMoney(forecast[forecast.length - 1].balance)}</strong>
+function DebtPlannerPage({ session }) {
+  const [debts, setDebts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [method, setMethod] = useState("snowball");
+  const [extraPayment, setExtraPayment] = useState("");
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    loadDebts();
+  }, [session]);
+
+  const loadDebts = async () => {
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("debts")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("paid", false)
+        .order("due_date", { ascending: true });
+
+      if (error) throw error;
+
+      setDebts(data || []);
+    } catch (error) {
+      console.error("Debt planner error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sortedDebts = [...debts].sort((a, b) => {
+    const amountA = Number(a.amount || 0);
+    const amountB = Number(b.amount || 0);
+
+    const rateA =
+      a.interest_rate !== null &&
+      a.interest_rate !== undefined &&
+      a.interest_rate !== ""
+        ? Number(a.interest_rate)
+        : null;
+
+    const rateB =
+      b.interest_rate !== null &&
+      b.interest_rate !== undefined &&
+      b.interest_rate !== ""
+        ? Number(b.interest_rate)
+        : null;
+
+    if (method === "snowball") {
+      return amountA - amountB;
+    }
+
+    // Avalanche:
+    // μεγαλύτερο επιτόκιο πρώτα.
+    // Οφειλές χωρίς επιτόκιο μπαίνουν στο τέλος.
+    if (rateA === null && rateB === null) {
+      return amountA - amountB;
+    }
+
+    if (rateA === null) {
+      return 1;
+    }
+
+    if (rateB === null) {
+      return -1;
+    }
+
+    if (rateA !== rateB) {
+      return rateB - rateA;
+    }
+
+    // Αν έχουν ίδιο επιτόκιο,
+    // προτεραιότητα στη μικρότερη οφειλή.
+    return amountA - amountB;
+  });
+  const calculatePayoffPlan = () => {
+    const balances = sortedDebts.map((debt) => ({
+      id: debt.id,
+
+      balance: Number(debt.amount || 0),
+
+      interestRate:
+        debt.interest_rate !== null &&
+        debt.interest_rate !== undefined &&
+        debt.interest_rate !== ""
+          ? Number(debt.interest_rate)
+          : 0,
+
+      monthlyPayment:
+        debt.monthly_payment !== null &&
+        debt.monthly_payment !== undefined &&
+        debt.monthly_payment !== ""
+          ? Number(debt.monthly_payment)
+          : 0,
+
+      paidOff: false,
+    }));
+
+    const monthlyExtra = Math.max(
+      0,
+      Number(String(extraPayment || "0").replace(",", ".")),
+    );
+
+    if (!balances.length) {
+      return {
+        months: null,
+        totalInterest: 0,
+      };
+    }
+
+    let month = 0;
+    let totalInterest = 0;
+
+    // Δόσεις που έχουν απελευθερωθεί από προηγούμενες
+    // εξοφλημένες οφειλές.
+    let freedPayments = 0;
+
+    while (balances.some((item) => item.balance > 0) && month < 600) {
+      month += 1;
+
+      // =====================================================
+      // 1. Υπολογισμός τόκων
+      // =====================================================
+
+      balances.forEach((item) => {
+        if (item.balance <= 0 || item.interestRate <= 0) {
+          return;
+        }
+
+        const monthlyInterest = item.balance * (item.interestRate / 100 / 12);
+
+        item.balance += monthlyInterest;
+        totalInterest += monthlyInterest;
+      });
+
+      // =====================================================
+      // 2. Κανονικές μηνιαίες δόσεις
+      // =====================================================
+
+      balances.forEach((item) => {
+        if (item.balance <= 0 || item.monthlyPayment <= 0) {
+          return;
+        }
+
+        const payment = Math.min(item.balance, item.monthlyPayment);
+
+        item.balance -= payment;
+
+        // Αν η κανονική δόση εξόφλησε την οφειλή,
+        // η δόση της απελευθερώνεται από τον επόμενο μήνα.
+        if (item.balance <= 0 && !item.paidOff) {
+          item.balance = 0;
+          item.paidOff = true;
+
+          freedPayments += item.monthlyPayment;
+        }
+      });
+
+      // =====================================================
+      // 3. Extra ποσό + δόσεις που έχουν απελευθερωθεί
+      // =====================================================
+
+      let availableExtra = monthlyExtra + freedPayments;
+
+      // Οι απελευθερωμένες δόσεις χρησιμοποιούνται
+      // από αυτόν τον μήνα και μετά.
+      freedPayments = 0;
+
+      // =====================================================
+      // 4. Η επιπλέον πληρωμή πηγαίνει στην πρώτη
+      //    ενεργή οφειλή της σειράς Snowball/Avalanche
+      // =====================================================
+
+      for (const item of balances) {
+        if (item.balance <= 0 || availableExtra <= 0) {
+          continue;
+        }
+
+        const payment = Math.min(item.balance, availableExtra);
+
+        item.balance -= payment;
+        availableExtra -= payment;
+
+        // Αν η οφειλή εξοφληθεί μέσω της επιπλέον
+        // πληρωμής, η κανονική της δόση θα
+        // απελευθερωθεί από τον επόμενο μήνα.
+        if (item.balance <= 0 && !item.paidOff) {
+          item.balance = 0;
+          item.paidOff = true;
+
+          freedPayments += item.monthlyPayment;
+        }
+      }
+
+      // =====================================================
+      // 5. Καθαρισμός μικρών υπολοίπων
+      // =====================================================
+
+      balances.forEach((item) => {
+        if (item.balance < 0.01) {
+          item.balance = 0;
+        }
+      });
+    }
+
+    return {
+      months: balances.some((item) => item.balance > 0) ? null : month,
+
+      totalInterest: Number(totalInterest.toFixed(2)),
+    };
+  };
+
+  const payoffPlan = calculatePayoffPlan();
+  const totalDebt = debts.reduce(
+    (sum, debt) => sum + Number(debt.amount || 0),
+    0,
+  );
+
+  const extra = Number(extraPayment || 0);
+
+  const formatMoney = (value) => {
+    return Number(value || 0).toLocaleString("el-GR", {
+      style: "currency",
+      currency: "EUR",
+    });
+  };
+
+  return (
+    <div className="page-content">
+      <div className="page-header debt-planner-page-header">
+        <div>
+          <h1>Αποπληρωμή χρεών</h1>
+          <p>Οργάνωσε τις οφειλές σου και δημιούργησε ένα πλάνο αποπληρωμής.</p>
         </div>
-      )}
-      {!loading && !error && forecast.length > 0 && (
-        <div className="forecast-summary-grid">
-          <div className="summary-card">
-            <span>ΣΥΝΟΛΙΚΑ ΕΣΟΔΑ</span>
-            <strong>
-              {formatMoney(
-                forecast.reduce((sum, item) => sum + item.income, 0),
-              )}
-            </strong>
-          </div>
+      </div>
 
-          <div className="summary-card">
-            <span>ΣΥΝΟΛΙΚΑ ΕΞΟΔΑ</span>
-            <strong>
-              {formatMoney(
-                forecast.reduce((sum, item) => sum + item.expenses, 0),
-              )}
-            </strong>
-          </div>
-
-          <div className="summary-card">
-            <span>ΣΥΝΟΛΙΚΕΣ ΟΦΕΙΛΕΣ</span>
-            <strong>
-              {formatMoney(forecast.reduce((sum, item) => sum + item.debts, 0))}
-            </strong>
-          </div>
-
-          <div className="summary-card">
-            <span>ΤΕΛΙΚΟ ΠΡΟΒΛΕΠΟΜΕΝΟ ΥΠΟΛΟΙΠΟ</span>
-            <strong
-              className={
-                forecast[forecast.length - 1].balance >= 0
-                  ? "forecast-positive"
-                  : "forecast-negative"
-              }
-            >
-              {formatMoney(forecast[forecast.length - 1].balance)}
-            </strong>
-          </div>
+      {loading ? (
+        <div className="form-card">
+          <p>Φόρτωση οφειλών...</p>
         </div>
-      )}
+      ) : (
+        <>
+          <div className="debt-planner-controls form-card">
+            <div>
+              <span className="planner-label">Μέθοδος αποπληρωμής</span>
 
-      {!loading && !error && forecast.length > 0 && (
-        <div className="forecast-conclusion">
-          {(() => {
-            const firstNegativeMonth = forecast.find(
-              (item) => item.balance < 0,
-            );
+              <div className="planner-methods">
+                <div className="debt-planner-methods">
+                  <button
+                    type="button"
+                    className={
+                      method === "snowball"
+                        ? "debt-planner-method active"
+                        : "debt-planner-method"
+                    }
+                    onClick={() => setMethod("snowball")}
+                  >
+                    Snowball
+                  </button>
 
-            if (firstNegativeMonth) {
-              return (
-                <>
-                  <strong>⚠️ Προσοχή στην πρόβλεψη</strong>
+                  <button
+                    type="button"
+                    className={
+                      method === "avalanche"
+                        ? "debt-planner-method active"
+                        : "debt-planner-method"
+                    }
+                    onClick={() => setMethod("avalanche")}
+                  >
+                    Avalanche
+                  </button>
+                </div>
+              </div>
+            </div>
 
-                  <span>
-                    Ο {formatMonth(firstNegativeMonth.date)} είναι ο πρώτος
-                    μήνας στον οποίο προβλέπεται αρνητικό υπόλοιπο.
-                  </span>
+            <div className="planner-extra">
+              <label>Επιπλέον ποσό / μήνα</label>
 
-                  <small>
-                    Προβλεπόμενο έλλειμμα:{" "}
-                    {formatMoney(Math.abs(firstNegativeMonth.balance))}
-                  </small>
-                </>
-              );
-            }
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={extraPayment}
+                onChange={(e) => setExtraPayment(e.target.value)}
+                placeholder="0,00 €"
+              />
+            </div>
+          </div>
 
-            return (
-              <>
-                <strong>✓ Η πρόβλεψη είναι θετική</strong>
+          <div className="forecast-summary-grid debt-planner-summary">
+            <div className="summary-card">
+              <span>ΕΝΕΡΓΕΣ ΟΦΕΙΛΕΣ</span>
+              <strong>{debts.length}</strong>
+            </div>
 
-                <span>
-                  Δεν προβλέπεται αρνητικό υπόλοιπο για την επιλεγμένη περίοδο.
-                </span>
-              </>
-            );
-          })()}
-        </div>
+            <div className="summary-card">
+              <span>ΣΥΝΟΛΙΚΟ ΧΡΕΟΣ</span>
+              <strong>{formatMoney(totalDebt)}</strong>
+            </div>
+
+            <div className="summary-card">
+              <span>ΕΠΙΠΛΕΟΝ / ΜΗΝΑ</span>
+              <strong>{formatMoney(extra)}</strong>
+            </div>
+
+            <div className="summary-card">
+              <span>ΜΕΘΟΔΟΣ</span>
+              <strong>
+                {method === "snowball" ? "Snowball" : "Avalanche"}
+              </strong>
+            </div>
+          </div>
+          {payoffPlan.months !== null && (
+            <div className="debt-payoff-result">
+              <div>
+                <span>ΕΚΤΙΜΩΜΕΝΟΣ ΧΡΟΝΟΣ ΕΞΟΦΛΗΣΗΣ</span>
+                <strong>
+                  {payoffPlan.months}{" "}
+                  {payoffPlan.months === 1 ? "μήνας" : "μήνες"}
+                </strong>
+              </div>
+
+              <div>
+                <span>ΣΥΝΟΛΙΚΟΙ ΤΟΚΟΙ</span>
+                <strong>{formatMoney(payoffPlan.totalInterest)}</strong>
+              </div>
+            </div>
+          )}
+
+          {payoffPlan.months === null && extra > 0 && (
+            <div className="debt-payoff-result">
+              <div>
+                <span>ΠΛΑΝΟ ΑΠΟΠΛΗΡΩΜΗΣ</span>
+                <strong>Δεν ολοκληρώνεται με το συγκεκριμένο ποσό.</strong>
+              </div>
+            </div>
+          )}
+
+          <div className="form-card debt-planner-list">
+            <div className="debt-planner-list-header">
+              <h2>Σειρά αποπληρωμής</h2>
+
+              <span>
+                {method === "snowball"
+                  ? "Από τη μικρότερη προς τη μεγαλύτερη οφειλή"
+                  : "Με βάση την προτεραιότητα των οφειλών"}
+              </span>
+            </div>
+
+            {sortedDebts.length === 0 ? (
+              <p>Δεν υπάρχουν απλήρωτες οφειλές.</p>
+            ) : (
+              <div className="debt-planner-items">
+                {sortedDebts.map((debt, index) => (
+                  <div className="debt-planner-item" key={debt.id}>
+                    <div className="debt-planner-number">{index + 1}</div>
+
+                    <div className="debt-planner-main">
+                      <div className="debt-planner-title">{debt.provider}</div>
+
+                      <div className="debt-planner-description">
+                        {debt.description || "Οφειλή"}
+                      </div>
+
+                      <div className="debt-planner-meta">
+                        {debt.interest_rate !== null &&
+                          debt.interest_rate !== undefined &&
+                          debt.interest_rate !== "" && (
+                            <span>
+                              Επιτόκιο: {Number(debt.interest_rate).toFixed(2)}%
+                            </span>
+                          )}
+
+                        {debt.monthly_payment !== null &&
+                          debt.monthly_payment !== undefined &&
+                          debt.monthly_payment !== "" && (
+                            <span>
+                              Δόση: {formatMoney(debt.monthly_payment)}
+                            </span>
+                          )}
+                      </div>
+                    </div>
+
+                    <div className="debt-planner-amount">
+                      {formatMoney(debt.amount)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
 }
-
 /* =========================================================
    EDIT DEBT
 ========================================================= */
@@ -3342,8 +3708,18 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
   const [provider, setProvider] = useState(debt.provider || "");
   const [category, setCategory] = useState(debt.category || "");
+  const interestAllowed =
+    category === "Αγορές / Δόσεις" ||
+    category === "Πιστωτικές / Χρηματοδοτήσεις";
+
   const [description, setDescription] = useState(debt.description || "");
   const [amount, setAmount] = useState(debt.amount ?? "");
+  const [monthlyPayment, setMonthlyPayment] = useState(
+    debt.monthly_payment ?? "",
+  );
+
+  const [interestRate, setInterestRate] = useState(debt.interest_rate ?? "");
+
   const [dueDate, setDueDate] = useState(debt.due_date || "");
 
   const [saving, setSaving] = useState(false);
@@ -3365,8 +3741,6 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
   const providerOptions = [...filteredProviders];
 
-  // Αν ο υπάρχων πάροχος δεν υπάρχει πλέον στους ενεργούς παρόχους,
-  // τον κρατάμε προσωρινά ώστε να μπορεί να αποθηκευτεί η οφειλή.
   if (provider && !providerOptions.some((item) => item.name === provider)) {
     providerOptions.unshift({
       id: "existing-provider",
@@ -3410,6 +3784,32 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
       return;
     }
 
+    const numericInterestRate =
+      interestRate !== "" && interestRate !== null
+        ? normalizeAmount(interestRate)
+        : null;
+
+    if (
+      numericInterestRate !== null &&
+      (!Number.isFinite(numericInterestRate) || numericInterestRate < 0)
+    ) {
+      setError("Το επιτόκιο δεν είναι έγκυρο.");
+      return;
+    }
+
+    const numericMonthlyPayment =
+      monthlyPayment !== "" && monthlyPayment !== null
+        ? normalizeAmount(monthlyPayment)
+        : null;
+
+    if (
+      numericMonthlyPayment !== null &&
+      (!Number.isFinite(numericMonthlyPayment) || numericMonthlyPayment <= 0)
+    ) {
+      setError("Η μηνιαία δόση δεν είναι έγκυρη.");
+      return;
+    }
+
     setSaving(true);
 
     const { error } = await supabase
@@ -3419,6 +3819,8 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
         provider,
         description: description.trim() || "Οφειλή",
         amount: numericAmount,
+        interest_rate: numericInterestRate,
+        monthly_payment: numericMonthlyPayment,
         due_date: dueDate,
       })
       .eq("id", debt.id)
@@ -3428,7 +3830,9 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
 
     if (error) {
       console.error(error);
+
       setError(`Δεν ήταν δυνατή η ενημέρωση της οφειλής. ${error.message}`);
+
       return;
     }
 
@@ -3508,7 +3912,34 @@ function EditDebtPage({ session, debt, onBack, onSaved }) {
                 inputMode="decimal"
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
+                placeholder="0,00"
                 required
+              />
+            </div>
+
+            <div className="form-field">
+              <label>Επιτόκιο (%)</label>
+
+              <input
+                type="text"
+                inputMode="decimal"
+                value={interestRate}
+                onChange={(event) => setInterestRate(event.target.value)}
+                placeholder="π.χ. 18,50"
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Μηνιαία δόση (€)</label>
+
+              <input
+                type="text"
+                inputMode="decimal"
+                value={monthlyPayment}
+                onChange={(event) => setMonthlyPayment(event.target.value)}
+                placeholder="π.χ. 150,00"
               />
             </div>
 
