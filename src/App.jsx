@@ -9,6 +9,7 @@ import { supabase } from "./lib/supabaseClient";
 import "./App.css";
 import ReceiptsPage from "./ReceiptsPage";
 import RecurringExpensesPage from "./RecurringExpensesPage";
+import { Html5Qrcode } from "html5-qrcode";
 
 /* =========================================================
    PROVIDERS / CATEGORIES
@@ -4326,7 +4327,44 @@ function ExpensesPage({ session }) {
   const [paymentCardId, setPaymentCardId] = useState("");
 
   const [saving, setSaving] = useState(false);
+  const [qrData, setQrData] = useState("");
+  const [qrScanning, setQrScanning] = useState(false);
+  useEffect(() => {
+    if (!qrScanning) return;
 
+    const scanner = new Html5Qrcode("expense-qr-reader");
+
+    scanner
+      .start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        (decodedText) => {
+          setQrData(decodedText);
+          setQrScanning(false);
+
+          scanner
+            .stop()
+            .then(() => scanner.clear())
+            .catch((error) => console.error("QR stop:", error));
+        },
+        () => {},
+      )
+      .catch((error) => {
+        console.error("QR camera:", error);
+        setQrScanning(false);
+        alert("Δεν ήταν δυνατή η εκκίνηση της κάμερας.");
+      });
+
+    return () => {
+      scanner
+        .stop()
+        .then(() => scanner.clear())
+        .catch(() => {});
+    };
+  }, [qrScanning]);
   useEffect(() => {
     loadExpenses();
     loadCards();
@@ -4392,6 +4430,33 @@ function ExpensesPage({ session }) {
     if (value !== "card") {
       setPaymentCardId("");
     }
+  };
+  /* =======================================================
+
+     QR ΑΠΟΔΕΙΞΗΣ
+
+  ======================================================= */
+
+  const handleExpenseQrScan = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const scanner = new Html5Qrcode("expense-qr-reader");
+
+      const decodedText = await scanner.scanFile(file, true);
+
+      setQrData(decodedText);
+
+      alert(`Το QR διαβάστηκε επιτυχώς:\n\n${decodedText}`);
+    } catch (error) {
+      console.error("QR scan error:", error);
+
+      alert("Δεν ήταν δυνατή η ανάγνωση του QR της απόδειξης.");
+    }
+
+    event.target.value = "";
   };
 
   /* =======================================================
@@ -4688,14 +4753,30 @@ function ExpensesPage({ session }) {
           {/* -------------------------------------------------
              ACTIONS
           ------------------------------------------------- */}
-
           <div className="form-actions">
-            <span></span>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setQrScanning(true)}
+            >
+              ▣ Σάρωση QR απόδειξης
+            </button>
 
             <button type="submit" disabled={saving}>
               {saving ? "Αποθήκευση..." : "+ Προσθήκη εξόδου"}
             </button>
           </div>
+
+          {qrScanning && (
+            <div
+              id="expense-qr-reader"
+              style={{
+                width: "100%",
+                maxWidth: "420px",
+                margin: "16px auto 0",
+              }}
+            />
+          )}
         </form>
       </div>
 
