@@ -5992,3 +5992,15 @@ select {
     padding: 0 15px;
   }
 }
+.debt-status-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+.debt-status-button.pending {
+  min-width: 90px;
+  justify-content: center;
+  text-align: center;
+}

@@ -2216,7 +2216,11 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
                   selectedMonth={selectedMonth}
                 />
               ) : (
-                <DashboardLinkedDebtRow key={debt.id} debt={debt} />
+                <DashboardLinkedDebtRow
+                  key={debt.id}
+                  debt={debt}
+                  onEdit={onEditDebt}
+                />
               ),
             )
           )}
@@ -2419,7 +2423,7 @@ function UpcomingDebts({ debts }) {
    Εμφάνιση πάγιων οφειλών / δόσεων / δανείων
 ========================================================= */
 
-function DashboardLinkedDebtRow({ debt }) {
+function DashboardLinkedDebtRow({ debt, onEdit }) {
   let sourceLabel = "Υποχρέωση";
 
   if (debt.sourceType === "recurring") {
@@ -2435,30 +2439,73 @@ function DashboardLinkedDebtRow({ debt }) {
   }
 
   const formattedDate = debt.due_date ? formatDate(debt.due_date) : "-";
+  const [deleting, setDeleting] = useState(false);
 
+  const deleteDebt = async () => {
+    const confirmed = window.confirm(
+      `Θέλετε να διαγράψετε την οφειλή "${debt.provider}";`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeleting(true);
+
+    const { error } = await supabase
+      .from("debts")
+      .delete()
+      .eq("id", debt.id)
+      .eq("user_id", debt.user_id);
+
+    if (error) {
+      console.error(error);
+      alert("Δεν ήταν δυνατή η διαγραφή της οφειλής.");
+      setDeleting(false);
+      return;
+    }
+
+    window.location.reload();
+  };
   return (
     <div className="debt-row debt-row-pending">
       <div className="debt-icon">
         {debt.provider?.charAt(0)?.toUpperCase() || "€"}
       </div>
-
       <div className="debt-info">
         <strong>{debt.provider}</strong>
 
         <span>{debt.description || sourceLabel}</span>
       </div>
-
       <div className="debt-due">
         <span>ΛΗΞΗ</span>
 
         <strong>{formattedDate}</strong>
       </div>
-
       <div className="debt-amount">
         <strong>{formatCurrency(debt.amount)}</strong>
       </div>
-
       <span className="debt-status-button pending">{sourceLabel}</span>
+      <button
+        type="button"
+        className="edit-debt-button"
+        onClick={() => onEdit(debt)}
+        disabled={deleting}
+        title="Επεξεργασία οφειλής"
+        aria-label="Επεξεργασία οφειλής"
+      >
+        ✎
+      </button>
+      <button
+        type="button"
+        className="delete-debt-button"
+        onClick={deleteDebt}
+        disabled={deleting}
+        title="Διαγραφή οφειλής"
+        aria-label="Διαγραφή οφειλής"
+      >
+        🗑
+      </button>{" "}
     </div>
   );
 }
