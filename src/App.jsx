@@ -4154,43 +4154,74 @@ function IncomePage({ session }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!description || !amount || !incomeDate) {
-      alert("Συμπληρώστε περιγραφή, ποσό και ημερομηνία.");
+    const total = normalizeAmount(totalAmount);
+    const installment = normalizeAmount(installmentAmount);
+    const totalCount = Number(totalInstallments);
+    const paidCount = Number(paidInstallments || 0);
+
+    let calculatedTotal = total;
+    let calculatedInstallment = installment;
+
+    // Αν έχει δοθεί μόνο ποσό δόσης → υπολογίζουμε το συνολικό ποσό
+    if (!calculatedTotal && calculatedInstallment && totalCount > 0) {
+      calculatedTotal = Number((calculatedInstallment * totalCount).toFixed(2));
+    }
+
+    // Αν έχει δοθεί μόνο συνολικό ποσό → υπολογίζουμε το ποσό δόσης
+    if (!calculatedInstallment && calculatedTotal && totalCount > 0) {
+      calculatedInstallment = Number((calculatedTotal / totalCount).toFixed(2));
+    }
+
+    if (
+      !category ||
+      !provider ||
+      (!calculatedTotal && !calculatedInstallment) ||
+      !totalCount ||
+      !nextDueDate
+    ) {
+      alert(
+        "Συμπληρώστε πάροχο, συνολικό ποσό ή ποσό δόσης, αριθμό δόσεων και ημερομηνία.",
+      );
       return;
     }
 
-    const numericAmount = normalizeAmount(amount);
-
-    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-      alert("Το ποσό δεν είναι έγκυρο.");
+    if (totalCount < 1 || paidCount < 0 || paidCount > totalCount) {
+      alert("Ο αριθμός των δόσεων δεν είναι έγκυρος.");
       return;
     }
 
     setSaving(true);
 
-    const { error } = await supabase.from("income").insert({
+    const { error } = await supabase.from("installments").insert({
       user_id: session.user.id,
-      description,
-      category: category || null,
-      amount: numericAmount,
-      income_date: incomeDate,
-      recurring,
+      provider,
+      description: description || provider,
+      total_amount: calculatedTotal,
+      installment_amount: calculatedInstallment,
+      total_installments: totalCount,
+      paid_installments: paidCount,
+      next_due_date: nextDueDate,
+      active: paidCount < totalCount,
     });
-
-    setSaving(false);
 
     if (error) {
       console.error(error);
-      alert(`Δεν ήταν δυνατή η αποθήκευση. ${error.message}`);
+      alert("Δεν ήταν δυνατή η αποθήκευση της δόσης.");
+      setSaving(false);
       return;
     }
 
-    setDescription("");
+    setProvider("");
     setCategory("");
-    setAmount("");
-    setRecurring(false);
+    setDescription("");
+    setTotalAmount("");
+    setInstallmentAmount("");
+    setTotalInstallments("");
+    setPaidInstallments("0");
+    setNextDueDate(getTodayDateString());
 
-    await loadIncome();
+    setSaving(false);
+    loadInstallments();
   };
 
   const handleDelete = async (id) => {
@@ -5845,7 +5876,52 @@ function InstallmentsPage({ session }) {
 
     setProvider(providerName);
   };
+  const handleTotalAmountChange = (event) => {
+    const value = event.target.value;
 
+    setTotalAmount(value);
+
+    const total = normalizeAmount(value);
+    const count = Number(totalInstallments);
+
+    if (total > 0 && count > 0) {
+      setInstallmentAmount((total / count).toFixed(2));
+    }
+  };
+
+  const handleInstallmentAmountChange = (event) => {
+    const value = event.target.value;
+
+    setInstallmentAmount(value);
+
+    const installment = normalizeAmount(value);
+    const count = Number(totalInstallments);
+
+    if (installment > 0 && count > 0) {
+      setTotalAmount((installment * count).toFixed(2));
+    }
+  };
+
+  const handleTotalInstallmentsChange = (event) => {
+    const value = event.target.value;
+
+    setTotalInstallments(value);
+
+    const count = Number(value);
+
+    if (count <= 0) {
+      return;
+    }
+
+    const total = normalizeAmount(totalAmount);
+    const installment = normalizeAmount(installmentAmount);
+
+    if (installment > 0) {
+      setTotalAmount((installment * count).toFixed(2));
+    } else if (total > 0) {
+      setInstallmentAmount((total / count).toFixed(2));
+    }
+  };
   useEffect(() => {
     loadInstallments();
   }, [session.user.id]);
@@ -6086,9 +6162,8 @@ function InstallmentsPage({ session }) {
                 type="text"
                 inputMode="decimal"
                 value={totalAmount}
-                onChange={(event) => setTotalAmount(event.target.value)}
+                onChange={handleTotalAmountChange}
                 placeholder="0,00"
-                required
               />
             </div>
 
@@ -6099,9 +6174,8 @@ function InstallmentsPage({ session }) {
                 type="text"
                 inputMode="decimal"
                 value={installmentAmount}
-                onChange={(event) => setInstallmentAmount(event.target.value)}
+                onChange={handleInstallmentAmountChange}
                 placeholder="0,00"
-                required
               />
             </div>
           </div>
@@ -6114,7 +6188,7 @@ function InstallmentsPage({ session }) {
                 type="number"
                 min="1"
                 value={totalInstallments}
-                onChange={(event) => setTotalInstallments(event.target.value)}
+                onChange={handleTotalInstallmentsChange}
                 placeholder="12"
                 required
               />
