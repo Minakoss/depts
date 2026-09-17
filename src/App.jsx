@@ -595,7 +595,7 @@ function App() {
     const timer = setTimeout(() => {
       setShowWelcome(false);
       sessionStorage.setItem("myDebtsWelcomeShown", "true");
-    }, 2000);
+    }, 1000);
 
     return () => clearTimeout(timer);
   }, [session, recoveryMode, showWelcome]);
