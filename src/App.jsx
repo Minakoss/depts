@@ -538,7 +538,9 @@ function App() {
   const [session, setSession] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [recoveryMode, setRecoveryMode] = useState(false);
-
+  const [showWelcome, setShowWelcome] = useState(
+    () => sessionStorage.getItem("myDebtsWelcomeShown") !== "true",
+  );
   useEffect(() => {
     const getSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -585,6 +587,18 @@ function App() {
       subscription.unsubscribe();
     };
   }, []);
+  useEffect(() => {
+    if (!session || recoveryMode || !showWelcome) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setShowWelcome(false);
+      sessionStorage.setItem("myDebtsWelcomeShown", "true");
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [session, recoveryMode, showWelcome]);
 
   if (checkingSession) {
     return null;
@@ -608,8 +622,34 @@ function App() {
   if (!session) {
     return <LoginPage />;
   }
+  if (showWelcome) {
+    return <WelcomePage />;
+  }
 
   return <Dashboard session={session} />;
+}
+/* =========================================================
+   WELCOME
+========================================================= */
+
+function WelcomePage() {
+  return (
+    <div className="welcome-screen">
+      <div className="welcome-content">
+        <div className="welcome-logo">€</div>
+
+        <h1>Καλώς ήρθατε</h1>
+
+        <p>
+          Καλώς ήρθατε στο <strong>My Debts</strong>
+        </p>
+
+        <span>Η προσωπική σας οικονομική διαχείριση</span>
+
+        <div className="welcome-loader"></div>
+      </div>
+    </div>
+  );
 }
 /* =========================================================
    RESET PASSWORD
@@ -1743,6 +1783,7 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       incomeResult,
       expensesResult,
       recurringResult,
+      recurringExpensesResult,
       installmentsResult,
       loansResult,
     ] = await Promise.all([
@@ -1790,6 +1831,15 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         .eq("user_id", session.user.id)
         .eq("active", true),
 
+      /* =====================================================
+         ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΑ ΕΞΟΔΑ
+      ===================================================== */
+
+      supabase
+        .from("recurring_expenses")
+        .select("*")
+        .eq("user_id", session.user.id)
+        .eq("active", true),
       /* =====================================================
          ΔΟΣΕΙΣ
       ===================================================== */
@@ -1863,6 +1913,35 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       sourceType: "recurring",
       sourceId: item.id,
     }));
+    /* =======================================================
+   ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΑ ΕΞΟΔΑ
+======================================================= */
+
+    const recurringExpenseDebts = (recurringExpensesResult.data || [])
+      .filter((item) => {
+        const dueDate = getDateInSelectedMonth(year, month, item.day_of_month);
+
+        if (item.start_date && dueDate < item.start_date) {
+          return false;
+        }
+
+        if (item.end_date && dueDate > item.end_date) {
+          return false;
+        }
+
+        return true;
+      })
+      .map((item) => ({
+        id: `recurring-expense-${item.id}-${year}-${month + 1}`,
+        user_id: item.user_id,
+        provider: item.description,
+        description: `${item.description} · Επαναλαμβανόμενο έξοδο`,
+        amount: Number(item.amount || 0),
+        due_date: getDateInSelectedMonth(year, month, item.day_of_month),
+        paid: false,
+        sourceType: "recurring-expense",
+        sourceId: item.id,
+      }));
 
     /* =======================================================
        ΔΟΣΕΙΣ
@@ -1979,10 +2058,10 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     /* =======================================================
        ΕΝΟΠΟΙΗΣΗ ΟΛΩΝ ΤΩΝ ΥΠΟΧΡΕΩΣΕΩΝ
     ======================================================= */
-
     const combinedDebts = [
       ...normalDebts,
       ...recurringDebts,
+      ...recurringExpenseDebts,
       ...installmentDebts,
       ...loanDebts,
     ];
@@ -2741,8 +2820,43 @@ function ForecastPage({ session }) {
       const expenses = expensesResult.data || [];
       const debts = debtsResult.data || [];
       const recurringExpenses = recurringExpensesResult.data || [];
+      const recurringExpensesForMonth = recurringExpenses
+        .filter((item) => {
+          if (!item.start_date) return true;
+
+          return item.start_date < endDate;
+        })
+        .filter((item) => {
+          if (!item.end_date) return true;
+
+          return item.end_date >= startDate;
+        })
+        .map((item) => {
+          const day = Math.min(
+            Number(item.day_of_month || 1),
+            new Date(year, month + 1, 0).getDate(),
+          );
+
+          const expenseDate = `${year}-${String(month + 1).padStart(
+            2,
+            "0",
+          )}-${String(day).padStart(2, "0")}`;
+
+          return {
+            id: `recurring-${item.id}-${year}-${month + 1}`,
+            user_id: item.user_id,
+            description: item.description,
+            category: item.category,
+            amount: Number(item.amount || 0),
+            expense_date: expenseDate,
+            recurring: true,
+            payment_method: item.payment_method,
+            payment_card_id: item.payment_card_id,
+          };
+        });
       const result = [];
       let cumulativeBalance = 0;
+      expenses.push(...recurringExpensesForMonth);
 
       for (let index = 0; index < months; index++) {
         const monthDate = new Date(
@@ -4556,17 +4670,16 @@ function ExpensesPage({ session }) {
       return;
     }
 
-    /* -------------------------------------------------------
-       Αν επιλέχθηκε κάρτα, πρέπει να έχει επιλεγεί συγκεκριμένη
-       κάρτα τροφοδοσίας.
-    ------------------------------------------------------- */
-
     if (paymentMethod === "card" && !paymentCardId) {
       alert("Επιλέξτε την κάρτα τροφοδοσίας.");
       return;
     }
 
     setSaving(true);
+
+    /* =======================================================
+     ΑΠΟΘΗΚΕΥΣΗ ΚΑΝΟΝΙΚΟΥ ΕΞΟΔΟΥ
+  ======================================================= */
 
     const { error } = await supabase.from("expenses").insert({
       user_id: session.user.id,
@@ -4575,22 +4688,60 @@ function ExpensesPage({ session }) {
       amount: numericAmount,
       expense_date: expenseDate,
       recurring,
-
       payment_method: paymentMethod,
       payment_card_id: paymentMethod === "card" ? Number(paymentCardId) : null,
     });
 
-    setSaving(false);
-
     if (error) {
       console.error("Save expense:", error);
       alert(`Δεν ήταν δυνατή η αποθήκευση. ${error.message}`);
+      setSaving(false);
       return;
     }
 
-    /* -------------------------------------------------------
-       Reset φόρμας
-    ------------------------------------------------------- */
+    /* =======================================================
+     ΑΝ ΕΙΝΑΙ ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΟ
+     → ΑΠΟΘΗΚΕΥΣΗ ΚΑΙ ΣΤΟ recurring_expenses
+  ======================================================= */
+
+    if (recurring) {
+      const expenseDateObject = new Date(`${expenseDate}T12:00:00`);
+      const dayOfMonth = expenseDateObject.getDate();
+
+      const { error: recurringError } = await supabase
+        .from("recurring_expenses")
+        .insert({
+          user_id: session.user.id,
+          description: description.trim(),
+          category: category || null,
+          amount: numericAmount,
+          day_of_month: dayOfMonth,
+          start_date: expenseDate,
+          end_date: null,
+          payment_method: paymentMethod,
+          payment_card_id:
+            paymentMethod === "card" ? Number(paymentCardId) : null,
+          active: true,
+        });
+
+      if (recurringError) {
+        console.error("Save recurring expense:", recurringError);
+
+        alert(
+          `Το έξοδο αποθηκεύτηκε, αλλά δεν ήταν δυνατή η δημιουργία του επαναλαμβανόμενου εξόδου.\n\n${recurringError.message}`,
+        );
+
+        setSaving(false);
+        await loadExpenses();
+        return;
+      }
+    }
+
+    setSaving(false);
+
+    /* =======================================================
+     RESET ΦΟΡΜΑΣ
+  ======================================================= */
 
     setDescription("");
     setCategory("");
@@ -5606,40 +5757,107 @@ function RecurringDebtsPage({ session }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    if (!description || !amount || !expenseDate) {
+      alert("Συμπληρώστε περιγραφή, ποσό και ημερομηνία.");
+      return;
+    }
+
     const numericAmount = normalizeAmount(amount);
 
-    if (!provider || !numericAmount || !dayOfMonth) {
-      alert("Συμπληρώστε πάροχο, ποσό και ημέρα.");
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      alert("Το ποσό δεν είναι έγκυρο.");
+      return;
+    }
+
+    if (paymentMethod === "card" && !paymentCardId) {
+      alert("Επιλέξτε την κάρτα τροφοδοσίας.");
       return;
     }
 
     setSaving(true);
 
-    const { error } = await supabase.from("recurring_debts").insert({
+    /* =======================================================
+     ΑΠΟΘΗΚΕΥΣΗ ΚΑΝΟΝΙΚΟΥ ΕΞΟΔΟΥ
+  ======================================================= */
+
+    const { error } = await supabase.from("expenses").insert({
       user_id: session.user.id,
+      description: description.trim(),
       category: category || null,
-      provider,
-      description: description || provider,
       amount: numericAmount,
-      day_of_month: Number(dayOfMonth),
-      active: true,
+      expense_date: expenseDate,
+      recurring,
+
+      payment_method: paymentMethod,
+      payment_card_id: paymentMethod === "card" ? Number(paymentCardId) : null,
     });
 
-    setSaving(false);
-
     if (error) {
-      console.error(error);
+      console.error("Save expense:", error);
       alert(`Δεν ήταν δυνατή η αποθήκευση. ${error.message}`);
+      setSaving(false);
       return;
     }
 
-    setProvider("");
-    setCategory("");
-    setDescription("");
-    setAmount("");
-    setDayOfMonth("1");
+    /* =======================================================
+     ΑΝ ΕΙΝΑΙ ΕΠΑΝΑΛΑΜΒΑΝΟΜΕΝΟ
+     → ΑΠΟΘΗΚΕΥΣΗ ΚΑΙ ΣΤΟ recurring_expenses
+  ======================================================= */
+    console.log("Recurring expense check:", {
+      recurring,
+      description,
+      amount: numericAmount,
+      expenseDate,
+    });
+    if (recurring) {
+      const expenseDateObject = new Date(`${expenseDate}T12:00:00`);
 
-    await loadRecurring();
+      const dayOfMonth = expenseDateObject.getDate();
+
+      const { error: recurringError } = await supabase
+        .from("recurring_expenses")
+        .insert({
+          user_id: session.user.id,
+          description: description.trim(),
+          category: category || null,
+          amount: numericAmount,
+          day_of_month: dayOfMonth,
+          start_date: expenseDate,
+          end_date: null,
+          payment_method: paymentMethod,
+          payment_card_id:
+            paymentMethod === "card" ? Number(paymentCardId) : null,
+          active: true,
+        });
+
+      if (recurringError) {
+        console.error("Save recurring expense:", recurringError);
+
+        alert(
+          `Το έξοδο αποθηκεύτηκε, αλλά δεν ήταν δυνατή η δημιουργία του επαναλαμβανόμενου εξόδου.\n\n${recurringError.message}`,
+        );
+
+        setSaving(false);
+        await loadExpenses();
+        return;
+      }
+    }
+
+    setSaving(false);
+
+    /* =======================================================
+     RESET ΦΟΡΜΑΣ
+  ======================================================= */
+
+    setDescription("");
+    setCategory("");
+    setAmount("");
+    setExpenseDate(getTodayDateString());
+    setRecurring(false);
+    setPaymentMethod("bank");
+    setPaymentCardId("");
+
+    await loadExpenses();
   };
 
   const toggleActive = async (item) => {
@@ -6472,16 +6690,30 @@ function LoansPage({ session }) {
   };
 
   const handleDelete = async (id) => {
-    const deleted = await deleteRecord(
-      "loans",
-      id,
-      session.user.id,
-      "το δάνειο",
+    const confirmed = window.confirm(
+      "Θέλετε να διαγράψετε αυτή την πάγια οφειλή;",
     );
 
-    if (deleted) {
-      await loadLoans();
+    if (!confirmed) return;
+
+    setLoading(true);
+
+    const { error } = await supabase
+      .from("recurring_debts")
+      .delete()
+      .eq("id", id)
+      .eq("user_id", session.user.id);
+
+    if (error) {
+      console.error("Delete recurring debt error:", error);
+      alert(
+        `Δεν ήταν δυνατή η διαγραφή της πάγιας οφειλής.\n\n${error.message}`,
+      );
+      setLoading(false);
+      return;
     }
+
+    await loadRecurring();
   };
 
   const totalRemaining = items.reduce(
