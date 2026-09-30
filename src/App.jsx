@@ -1795,9 +1795,8 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         .from("debts")
         .select("*")
         .eq("user_id", session.user.id)
-        .or(
-          `and(due_date.gte.${startDate},due_date.lt.${endDate}),and(due_date.lt.${startDate},paid.eq.false)`,
-        ),
+        .gte("due_date", startDate)
+        .lt("due_date", endDate),
 
       /* =====================================================
          ΕΣΟΔΑ
@@ -1967,34 +1966,40 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
         selectedMonth,
       );
 
-      if (
-        monthDifference === null ||
-        monthDifference < 0 ||
-        monthDifference >= remainingInstallments
-      ) {
+      if (monthDifference === null) {
         return;
       }
 
-      const dueDate = addMonthsToDateString(
-        item.next_due_date,
-        monthDifference,
-      );
+      // Αν η επόμενη δόση έχει ήδη περάσει,
+      // εμφανίζεται ως μεταφερόμενη στον επιλεγμένο μήνα.
+      const isCarriedOver = monthDifference < 0;
+
+      if (!isCarriedOver && monthDifference >= remainingInstallments) {
+        return;
+      }
+
+      const effectiveMonthDifference = isCarriedOver ? 0 : monthDifference;
+
+      const dueDate = isCarriedOver
+        ? item.next_due_date
+        : addMonthsToDateString(item.next_due_date, effectiveMonthDifference);
+
+      const installmentNumber =
+        Number(item.paid_installments || 0) + effectiveMonthDifference + 1;
 
       installmentDebts.push({
-        id: `installment-${item.id}-${monthDifference}`,
+        id: `installment-${item.id}-${effectiveMonthDifference}`,
         user_id: item.user_id,
         provider: item.provider,
-        description: `${item.description || "Δόση"} · Δόση ${
-          Number(item.paid_installments || 0) + monthDifference + 1
-        }/${item.total_installments}`,
+        description: `${item.description || "Δόση"} · Δόση ${installmentNumber}/${item.total_installments}`,
         amount: Number(item.installment_amount || 0),
         due_date: dueDate,
         paid: false,
+        carriedOver: isCarriedOver,
         sourceType: "installment",
         sourceId: item.id,
       });
     });
-
     /* =======================================================
        ΔΑΝΕΙΑ
     ======================================================= */
@@ -2064,7 +2069,13 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       ...recurringExpenseDebts,
       ...installmentDebts,
       ...loanDebts,
-    ];
+    ].filter((item) => {
+      if (!item?.due_date) {
+        return false;
+      }
+
+      return item.due_date >= startDate && item.due_date < endDate;
+    });
 
     setDebts(sortDebts(combinedDebts));
     setIncome(incomeResult.data || []);
@@ -2518,7 +2529,62 @@ function DashboardLinkedDebtRow({ debt, onEdit }) {
   }
 
   const formattedDate = debt.due_date ? formatDate(debt.due_date) : "-";
+  const [updating, setUpdating] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  const makeLoanPayment = async () => {
+    setUpdating(true);
+
+    const { data: loan, error: loanError } = await supabase
+      .from("loans")
+      .select(
+        "remaining_amount, monthly_payment, paid_installments, next_due_date",
+      )
+      .eq("id", debt.sourceId)
+      .eq("user_id", debt.user_id)
+      .single();
+
+    if (loanError) {
+      console.error(loanError);
+      alert("Δεν ήταν δυνατή η ενημέρωση του δανείου.");
+      setUpdating(false);
+      return;
+    }
+
+    const currentRemaining = Number(loan.remaining_amount || 0);
+    const payment = Number(debt.amount || loan.monthly_payment || 0);
+
+    const newRemaining = Math.max(0, currentRemaining - payment);
+    const newPaidInstallments = Number(loan.paid_installments || 0) + 1;
+
+    const finished = newRemaining <= 0;
+
+    let newDueDate = loan.next_due_date;
+
+    if (!finished && loan.next_due_date) {
+      newDueDate = addMonthsToDateString(loan.next_due_date, 1);
+    }
+
+    const { error } = await supabase
+      .from("loans")
+      .update({
+        remaining_amount: newRemaining,
+        paid_installments: newPaidInstallments,
+        next_due_date: newDueDate,
+        active: !finished,
+      })
+      .eq("id", debt.sourceId)
+      .eq("user_id", debt.user_id);
+
+    if (error) {
+      console.error(error);
+      alert("Δεν ήταν δυνατή η καταχώρηση της πληρωμής του δανείου.");
+      setUpdating(false);
+      return;
+    }
+
+    window.location.reload();
+  };
 
   const deleteDebt = async () => {
     const confirmed = window.confirm(
@@ -2546,45 +2612,62 @@ function DashboardLinkedDebtRow({ debt, onEdit }) {
 
     window.location.reload();
   };
+
   return (
     <div className="debt-row debt-row-pending">
       <div className="debt-icon">
         {debt.provider?.charAt(0)?.toUpperCase() || "€"}
       </div>
+
       <div className="debt-info">
         <strong>{debt.provider}</strong>
-
         <span>{debt.description || sourceLabel}</span>
       </div>
+
       <div className="debt-due">
         <span>ΛΗΞΗ</span>
-
         <strong>{formattedDate}</strong>
       </div>
+
       <div className="debt-amount">
         <strong>{formatCurrency(debt.amount)}</strong>
       </div>
-      <span className="debt-status-button pending">{sourceLabel}</span>
+
+      {debt.sourceType === "loan" ? (
+        <button
+          type="button"
+          className="debt-status-button pending"
+          onClick={makeLoanPayment}
+          disabled={updating || deleting}
+          title="Καταχώρηση πληρωμής δανείου"
+        >
+          {updating ? "..." : "Πληρωμή"}
+        </button>
+      ) : (
+        <span className="debt-status-button pending">{sourceLabel}</span>
+      )}
+
       <button
         type="button"
         className="edit-debt-button"
         onClick={() => onEdit(debt)}
-        disabled={deleting}
+        disabled={updating || deleting}
         title="Επεξεργασία οφειλής"
         aria-label="Επεξεργασία οφειλής"
       >
         ✎
       </button>
+
       <button
         type="button"
         className="delete-debt-button"
         onClick={deleteDebt}
-        disabled={deleting}
+        disabled={updating || deleting}
         title="Διαγραφή οφειλής"
         aria-label="Διαγραφή οφειλής"
       >
         🗑
-      </button>{" "}
+      </button>
     </div>
   );
 }
@@ -2614,6 +2697,7 @@ function DebtRow({ debt, onEdit, selectedMonth = null }) {
   const togglePaid = async () => {
     setUpdating(true);
 
+    // Κανονική οφειλή
     const { error } = await supabase
       .from("debts")
       .update({
