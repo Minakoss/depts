@@ -2070,7 +2070,14 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
       ...installmentDebts,
       ...loanDebts,
     ].filter((item) => {
-      if (!item?.due_date) {
+      // Στο Dashboard εμφανίζονται μόνο οι υποχρεώσεις
+      // του επιλεγμένου μήνα. Εξαίρεση είναι μόνο όσες
+      // έχουν χαρακτηριστεί ρητά ως μεταφερόμενες.
+      if (item.carriedOver) {
+        return true;
+      }
+
+      if (!item.due_date) {
         return false;
       }
 
@@ -2555,7 +2562,8 @@ function DashboardLinkedDebtRow({ debt, onEdit }) {
     const payment = Number(debt.amount || loan.monthly_payment || 0);
 
     const newRemaining = Math.max(0, currentRemaining - payment);
-    const newPaidInstallments = Number(loan.paid_installments || 0) + 1;
+    const newPaidInstallments =
+      Number(loan.paid_installments || 0) + 1;
 
     const finished = newRemaining <= 0;
 
@@ -4352,74 +4360,39 @@ function IncomePage({ session }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const total = normalizeAmount(totalAmount);
-    const installment = normalizeAmount(installmentAmount);
-    const totalCount = Number(totalInstallments);
-    const paidCount = Number(paidInstallments || 0);
+    const normalizedAmount = normalizeAmount(amount);
 
-    let calculatedTotal = total;
-    let calculatedInstallment = installment;
-
-    // Αν έχει δοθεί μόνο ποσό δόσης → υπολογίζουμε το συνολικό ποσό
-    if (!calculatedTotal && calculatedInstallment && totalCount > 0) {
-      calculatedTotal = Number((calculatedInstallment * totalCount).toFixed(2));
-    }
-
-    // Αν έχει δοθεί μόνο συνολικό ποσό → υπολογίζουμε το ποσό δόσης
-    if (!calculatedInstallment && calculatedTotal && totalCount > 0) {
-      calculatedInstallment = Number((calculatedTotal / totalCount).toFixed(2));
-    }
-
-    if (
-      !category ||
-      !provider ||
-      (!calculatedTotal && !calculatedInstallment) ||
-      !totalCount ||
-      !nextDueDate
-    ) {
-      alert(
-        "Συμπληρώστε πάροχο, συνολικό ποσό ή ποσό δόσης, αριθμό δόσεων και ημερομηνία.",
-      );
-      return;
-    }
-
-    if (totalCount < 1 || paidCount < 0 || paidCount > totalCount) {
-      alert("Ο αριθμός των δόσεων δεν είναι έγκυρος.");
+    if (!description.trim() || !normalizedAmount || !incomeDate) {
+      alert("Συμπληρώστε περιγραφή, ποσό και ημερομηνία.");
       return;
     }
 
     setSaving(true);
 
-    const { error } = await supabase.from("installments").insert({
+    const { error } = await supabase.from("income").insert({
       user_id: session.user.id,
-      provider,
-      description: description || provider,
-      total_amount: calculatedTotal,
-      installment_amount: calculatedInstallment,
-      total_installments: totalCount,
-      paid_installments: paidCount,
-      next_due_date: nextDueDate,
-      active: paidCount < totalCount,
+      description: description.trim(),
+      category: category || null,
+      amount: normalizedAmount,
+      income_date: incomeDate,
+      recurring,
     });
 
     if (error) {
       console.error(error);
-      alert("Δεν ήταν δυνατή η αποθήκευση της δόσης.");
+      alert("Δεν ήταν δυνατή η αποθήκευση του εσόδου.");
       setSaving(false);
       return;
     }
 
-    setProvider("");
-    setCategory("");
     setDescription("");
-    setTotalAmount("");
-    setInstallmentAmount("");
-    setTotalInstallments("");
-    setPaidInstallments("0");
-    setNextDueDate(getTodayDateString());
+    setCategory("");
+    setAmount("");
+    setIncomeDate(getTodayDateString());
+    setRecurring(false);
 
+    await loadIncome();
     setSaving(false);
-    loadInstallments();
   };
 
   const handleDelete = async (id) => {
