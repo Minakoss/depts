@@ -2066,7 +2066,6 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
     const combinedDebts = [
       ...normalDebts,
       ...recurringDebts,
-      ...recurringExpenseDebts,
       ...installmentDebts,
       ...loanDebts,
     ].filter((item) => {
@@ -2322,6 +2321,43 @@ function DashboardHome({ session, onNewDebt, onEditDebt }) {
             )
           )}
         </div>
+      </div>
+
+      {/* =====================================================
+          ΕΞΟΔΑ ΜΗΝΑ
+      ===================================================== */}
+
+      <div className="dashboard-panel" style={{ margin: "0 30px 22px 39px" }}>
+        <div className="dashboard-panel-header">
+          <div>
+            <h3>Έξοδα {formatMonth(selectedMonth)}</h3>
+            <p>{expenses.length} καταχωρήσεις</p>
+          </div>
+        </div>
+
+        {expenses.length === 0 ? (
+          <div className="empty-state">Δεν υπάρχουν έξοδα για τον επιλεγμένο μήνα.</div>
+        ) : (
+          <div className="simple-record-list">
+            {expenses.map((expense) => (
+              <div className="simple-record" key={expense.id}>
+                <div>
+                  <strong>{expense.description}</strong>
+                  <span>
+                    {expense.category || "Χωρίς κατηγορία"} · {
+                      expense.expense_date
+                        ? new Date(`${expense.expense_date}T12:00:00`).toLocaleDateString("el-GR")
+                        : ""
+                    }
+                    {expense.recurring ? " · Επαναλαμβανόμενο" : ""}
+                  </span>
+                </div>
+
+                <strong>{formatCurrency(Number(expense.amount || 0))}</strong>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* =====================================================
@@ -2605,15 +2641,85 @@ function DashboardLinkedDebtRow({ debt, onEdit }) {
 
     setDeleting(true);
 
-    const { error } = await supabase
-      .from("debts")
-      .delete()
-      .eq("id", debt.id)
-      .eq("user_id", debt.user_id);
+    let error = null;
+
+    if (debt.sourceType === "recurring-expense") {
+      // Κρατάμε τα στοιχεία του κανόνα πριν τον διαγράψουμε,
+      // ώστε να διαγράψουμε και την αντίστοιχη καταχώρηση από expenses.
+      const { data: recurringExpense, error: recurringFetchError } = await supabase
+        .from("recurring_expenses")
+        .select("description, amount, user_id")
+        .eq("id", debt.sourceId)
+        .eq("user_id", debt.user_id)
+        .maybeSingle();
+
+      if (recurringFetchError) {
+        console.error("Load recurring expense before delete:", recurringFetchError);
+        error = recurringFetchError;
+      } else {
+        const result = await supabase
+          .from("recurring_expenses")
+          .delete()
+          .eq("id", debt.sourceId)
+          .eq("user_id", debt.user_id);
+
+        error = result.error;
+
+        // Αν διαγράφηκε ο κανόνας, διαγράφουμε και την καταχώρηση
+        // του συγκεκριμένου μήνα από τα πραγματικά expenses.
+        if (!error && recurringExpense) {
+          const { error: expenseDeleteError } = await supabase
+            .from("expenses")
+            .delete()
+            .eq("user_id", debt.user_id)
+            .eq("recurring", true)
+            .eq("description", recurringExpense.description)
+            .eq("amount", Number(recurringExpense.amount))
+            .eq("expense_date", debt.due_date);
+
+          if (expenseDeleteError) {
+            console.error("Delete linked expense:", expenseDeleteError);
+            error = expenseDeleteError;
+          }
+        }
+      }
+    } else if (debt.sourceType === "recurring") {
+      const result = await supabase
+        .from("recurring_debts")
+        .delete()
+        .eq("id", debt.sourceId)
+        .eq("user_id", debt.user_id);
+
+      error = result.error;
+    } else if (debt.sourceType === "installment") {
+      const result = await supabase
+        .from("installments")
+        .delete()
+        .eq("id", debt.sourceId)
+        .eq("user_id", debt.user_id);
+
+      error = result.error;
+    } else if (debt.sourceType === "loan") {
+      const result = await supabase
+        .from("loans")
+        .delete()
+        .eq("id", debt.sourceId)
+        .eq("user_id", debt.user_id);
+
+      error = result.error;
+    } else {
+      const result = await supabase
+        .from("debts")
+        .delete()
+        .eq("id", debt.id)
+        .eq("user_id", debt.user_id);
+
+      error = result.error;
+    }
 
     if (error) {
       console.error(error);
-      alert("Δεν ήταν δυνατή η διαγραφή της οφειλής.");
+      alert(`Δεν ήταν δυνατή η διαγραφή της οφειλής. ${error.message}`);
       setDeleting(false);
       return;
     }
@@ -4816,6 +4922,8 @@ function ExpensesPage({ session }) {
   ======================================================= */
 
   const handleDelete = async (id) => {
+    const item = items.find((expense) => expense.id === id);
+
     const deleted = await deleteRecord(
       "expenses",
       id,
@@ -4823,9 +4931,48 @@ function ExpensesPage({ session }) {
       "το έξοδο",
     );
 
-    if (deleted) {
-      await loadExpenses();
+    if (!deleted) {
+      return;
     }
+
+    // Αν το έξοδο είναι επαναλαμβανόμενο, διαγράφουμε και
+    // τον κανόνα από το recurring_expenses, ώστε να μην
+    // ξαναδημιουργείται στο Dashboard.
+    if (item?.recurring) {
+      const expenseDateObject = item.expense_date
+        ? new Date(`${item.expense_date}T12:00:00`)
+        : null;
+
+      const dayOfMonth = expenseDateObject
+        ? expenseDateObject.getDate()
+        : null;
+
+      let recurringQuery = supabase
+        .from("recurring_expenses")
+        .delete()
+        .eq("user_id", session.user.id)
+        .eq("description", item.description)
+        .eq("amount", Number(item.amount));
+
+      if (dayOfMonth !== null) {
+        recurringQuery = recurringQuery.eq("day_of_month", dayOfMonth);
+      }
+
+      if (item.expense_date) {
+        recurringQuery = recurringQuery.eq("start_date", item.expense_date);
+      }
+
+      const { error: recurringDeleteError } = await recurringQuery;
+
+      if (recurringDeleteError) {
+        console.error("Delete recurring expense:", recurringDeleteError);
+        alert(
+          `Το έξοδο διαγράφηκε, αλλά δεν ήταν δυνατή η διαγραφή του επαναλαμβανόμενου κανόνα.\n\n${recurringDeleteError.message}`,
+        );
+      }
+    }
+
+    await loadExpenses();
   };
 
   /* =======================================================
